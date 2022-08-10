@@ -1,0 +1,176 @@
+---
+- name: Prepare GPU and Podman for FR 
+  #hosts: fr_laptops
+  hosts: home
+  become: yes
+  vars:
+    subscription_username: "brightblade42"
+    subscription_password: "R2y1a1n@"
+    base_dir: "/home/eyemetric"
+    is_gpu: true
+    rhel_version: 9
+    register_rhel: true
+  tasks:
+    # Dependencies and prerequisites setup and install
+    - name: Register RHEL installation with sub
+      community.general.redhat_subscription:
+        state: present
+        username: "{{ subscription_username }}"
+        password: "{{ subscription_password }}"
+        auto_attach: true
+      
+    - name: RHSM enable a AppStream repo RHEL 9 
+      community.general.rhsm_repository: 
+        name: rhel-9-for-x86_64-appstream-rpms
+
+    - name: RHSM enable BaseOS repo RHEL 9 
+      community.general.rhsm_repository:
+       name: rhel-9-for-x86_64-baseos-rpms
+
+    - name: RHSM enable a CodeReady repo RHEL 9
+      community.general.rhsm_repository:
+       name: codeready-builder-for-rhel-9-x86_64-rpms
+      register: codeready
+
+    - name: install the nvidia cuda repo
+      register: cuda_repo
+      shell: dnf config-manager --add-repo=https://developer.download.nvidia.com/compute/cuda/repos/rhel10/x86_64/cuda-rhel9.repo
+      args:
+        creates: /etc/yum.repos.d/cuda-rhel9.repo
+
+    - debug:
+        var: cuda_repo
+
+    - name: enable cuda repository 
+      register: cuda_enabled
+      lineinfile:
+        path: /etc/yum.repos.d/cuda-rhel9.repo
+        create: false
+        regexp: enabled=
+        line: enabled=1
+      when: cuda_repo.changed == True
+
+
+    - name: dnf update the system
+      register: dnf_update
+      ansible.builtin.dnf:
+       name: "*"
+       state: latest
+
+    - debug:
+        var: dnf_update
+
+    - name: Import rhel9 epel gpg key 
+      rpm_key: 
+        state: present
+        key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9
+
+    - name: install EPEL Repo on RHEL 9
+      dnf: 
+        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+        state: latest 
+
+    - name: install container-tools for RHEL 9 
+      dnf: 
+        name: container-tools
+        state: latest 
+  
+    - name: install podman-compose for RHEL 9 
+      dnf: 
+        name: podman-compose
+        state: latest 
+
+    - name: install nvidia-container-toolkit repo 
+      register: nvidia_toolkit_repo
+      shell: | 
+        distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+        curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.repo | tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+      args:
+        creates: /etc/yum.repos.d/nvidia-container-toolkit.repo
+    - debug:
+        var: nvidia_toolkit_repo
+
+    - name: install nvidia-container-toolkit package
+      dnf: 
+        name: nvidia-container-toolkit
+        state: latest 
+      when: nvidia_toolkit_repo.changed == true
+
+    - name: modify container-runtime-config 
+      shell: sudo sed -i 's/^#no-cgroups = false/no-cgroups = true/;' /etc/nvidia-container-runtime/config.toml
+      when: nvidia_toolkit_repo.changed == true
+
+    - name: get nvidia SELinux policy module file 
+      register: nvidia_policy
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/NVIDIA/dgx-selinux/master/bin/RHEL7/nvidia-container.pp
+        dest: /tmp/nvidia-container.pp
+
+    - debug:
+        var: nvidia_policy
+
+    - name: add nvidia SELinux policy module
+      register: semodule_install
+      command: semodule -i /tmp/nvidia-container.pp
+      when: nvidia_policy.changed == True
+
+    - debug:
+        var: semodule_install
+
+    - name: remove tmp nvidia policy file
+      file: path=/tmp/nvidia-container.pp
+            state=absent
+
+    #this is currently voodoo to me
+    - name: check and restore selinux labels
+      register: selables
+      shell: nvidia-container-cli -k list | restorecon -v -f -
+
+    - debug:
+        var: selabels
+
+    - name: restorecon all accessed devices
+      register: restcon_dev
+      command: restorecon -Rv /dev
+
+    - debug:
+        var: restcon_dev
+    #end of selinux voodoo 
+
+    - name: Reboot the machine (Wait for 5 machine)
+      reboot: 
+        reboot_timeout: 300
+      when: dnf_update.changed == True
+
+    # Paravision and SAFR setup
+    - name: checkout compose-fr project
+      register: git_compose
+      ansible.builtin.git:
+        repo: https://github.com/brightblade42/compose-fr.git
+        dest: "{{ base_dir }}/fr"
+
+    - debug:
+        var: git_compose
+
+    - name: get the premade data container
+      register: data_container
+      shell: podman run -d --rm --name dbdata docker.io/eyemetricfr/dbdata:v0.92
+
+    - debug:
+        var: data_container
+
+    - name: copy  data volumes from data container
+      register: data_copy
+      shell: |
+        podman cp dbdata:/safr_pgdata.gz.tar /home/eyemetric
+        podman cp dbdata:/pvdb_pgdata.gz.tar /home/eyemetric
+   #need to pull down the pre defined volumes
+    - debug:
+        var: data_copy
+
+          #- name: extract volumes from tar files
+          #register: xsvf_tar
+          #shell: | 
+          #tar -xsvf /home/eyemetric/safr_pgdata.gz.tar -C /home/eyemetric/data
+          #mv $dvol/safr_pgdata $dvol/gpu_safr-db
+
