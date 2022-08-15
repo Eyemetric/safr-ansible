@@ -68,12 +68,12 @@
         - ansible_distribution == "RedHat"
         - ansible_distribution_major_version == "9"
 
-          #    - name: install container-tools for RHEL 8 
-          #register: container_tools_8
-          #shell: dnf module install container-tools:rhel8 
-          #when: 
-          #- ansible_distribution == "RedHat"
-          #- ansible_distribution_major_version == "8"
+    - name: install container-tools for RHEL 8 
+      register: container_tools_8
+      shell: dnf module install -y container-tools:rhel8 
+      when: 
+        - ansible_distribution == "RedHat"
+        - ansible_distribution_major_version == "8"
 
     - debug:
         var: container_tools_8

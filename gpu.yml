@@ -21,7 +21,7 @@
 
 - name: install latest nvidia driver
   register: nvidia_install
-  shell: dnf module install nvidia-driver:latest
+  shell: dnf module install -y nvidia-driver:latest
 
 - debug:
     var: nvidia_install
@@ -72,7 +72,7 @@
 
 #this is currently voodoo to me
 - name: check and restore selinux labels
-  register: selables
+  register: selabels
   shell: nvidia-container-cli -k list | restorecon -v -f -
 
 - debug:
