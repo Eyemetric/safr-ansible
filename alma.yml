@@ -1,0 +1,51 @@
+
+    #make a role.. Alma 
+    #################################################################################### 
+    # ALMALinux (RHEL CLONE)
+    #################################################################################### 
+    # BASEOS, APPStream, Extras enabled by default on 8 and 9
+    # There is currently no way to use dnf module for --set-enabled but since 
+    # the file needing modification is an ini file we can use ini mod
+    # not sure if this works for AlmaLinux 9 yet. 
+    - name: "Enable AlmaLinux 8 PowerTools repo"
+      community.general.ini_file:
+        path:       /etc/yum.repos.d/almalinux-powertools.repo
+        section:    powertools
+        option:     enabled
+        value:      1
+        create:     no
+      when: 
+        - ansible_distribution == "AlmaLinux"
+        - ansible_distribution_major_version == "8"
+
+    - name: "Enable AlmaLinux 9 PowerTools repo"
+      community.general.ini_file:
+        path:       /etc/yum.repos.d/almalinux-crb.repo
+        section:    crb
+        option:     enabled
+        value:      1
+        create:     no
+      when: 
+        - ansible_distribution == "AlmaLinux"
+        - ansible_distribution_major_version == "9"
+
+    - name: "Enable EPEL release for AlmaLinux 8 or 9"
+      dnf:
+        name: epel-release
+        state: latest
+      when: ansible_distribution == "AlmaLinux"
+      
+      
+    - name: dnf update RHEL 
+      register: dnf_update
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+      when: ansible_distribution == "AlmaLinux"
+
+
+    - name: install podman-compose for ALMA  8|9 
+      dnf: 
+        name: podman-compose
+        state: latest
+      when: ansible_distribution == "AlmaLinux"

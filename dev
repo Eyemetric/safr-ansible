@@ -1,0 +1,21 @@
+[vm]
+#rhel 9 virt
+192.168.0.88
+#rhel 8 virt
+192.168.0.120
+
+[vm:vars]
+want_gpu=false
+
+[metal]
+#rhel 9
+192.168.0.137
+
+[metal:vars]
+want_gpu=true
+
+[alma]
+192.168.0.177 
+192.168.0.43 
+#alma9 virt
+192.168.0.119

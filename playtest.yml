@@ -1,0 +1,107 @@
+- name: Test distro vars
+  hosts: all
+  #hosts: lap
+  remote_user: eyemetric
+  become: yes
+  vars:
+    subscription_username: "brightblade42"
+    subscription_password: "R2y1a1n@"
+    appstream: rhel-{{ ansible_distribution_major_version }}-for-x86_64-appstream-rpms
+    rhel_ver: "{{ ansible_distribution_major_version }}"
+  tasks:
+    - name: ping my hosts
+      ping:
+    - name: print msg
+      debug:
+        msg: Hello {{ ansible_distribution_major_version }} {{ ansible_nodename }}
+
+          #- name: Set authorized key taken from file
+          #ansible.posix.authorized_key:
+          #user: eyemetric
+          #state: present
+          #key: "{{ lookup('file', '/Users/ryan/.ssh/id_rsa.pub') }}"
+     # Dependencies and prerequisites setup and install
+    #################################################################################### 
+    # PROPER REDHAT SPECIFIC ONLY
+    #################################################################################### 
+    - name: RHSM Enable AppStream repo for RHEL 8 or 9
+      community.general.rhsm_repository: 
+        name: rhel-{{ ansible_distribution_major_version }}-for-x86_64-appstream-rpms
+      when: ansible_distribution == "RedHat"
+    
+    - name: RHSM enable BaseOS repo RHEL 8 or 9 
+      community.general.rhsm_repository:
+        name: rhel-{{ ansible_distribution_major_version }}-for-x86_64-baseos-rpms
+      when: ansible_distribution == "RedHat"
+
+    - name: RHSM enable a CodeReady repo RHEL 8 or 9
+      community.general.rhsm_repository:
+        name: codeready-builder-for-rhel-{{ ansible_distribution_major_version }}-x86_64-rpms
+      register: codeready
+      when: ansible_distribution == "RedHat"
+    
+    - name: Import epel gpg key for RHEL 8 or 9 
+      rpm_key: 
+        state: present
+        key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-{{ rhel_ver }}
+      when: ansible_distribution == "RedHat"
+
+    - name: install EPEL Repo on RHEL 8 or 9
+      dnf: 
+        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ rhel_ver }}.noarch.rpm
+        state: latest 
+      when: ansible_distribution == "RedHat"
+
+    - name: dnf update RHEL 
+      register: dnf_update
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+      when: ansible_distribution == "RedHat"
+
+    # what is in container-tools. ALMA doesn't know about this or seem to need it. 
+    - name: install container-tools for RHEL 9 
+      dnf: 
+        name: container-tools
+        state: latest 
+      when: 
+        - ansible_distribution == "RedHat"
+        - ansible_distribution_major_version == "9"
+
+          #    - name: install container-tools for RHEL 8 
+          #register: container_tools_8
+          #shell: dnf module install container-tools:rhel8 
+          #when: 
+          #- ansible_distribution == "RedHat"
+          #- ansible_distribution_major_version == "8"
+
+    - debug:
+        var: container_tools_8
+          
+    - name: install podman-compose for RHEL 8|9 
+      dnf: 
+        name: podman-compose
+        state: latest
+      when: ansible_distribution == "RedHat"
+    
+
+
+#####################################
+# Do we have a GPU capable machine? if so use the gpu workload
+# otherwise we're cpu based
+#####################################
+    - name: Check GPU capabilities
+      shell: lspci 
+      register: gpu
+
+    #- debug: var=gpu.stdout_lines
+
+    - name: do we have the gpu thing
+      register: has_gpu
+      debug: var=has_gpu
+      when: gpu.stdout.find("NVIDIA") != -1
+
+    - name: include gpu setup
+      include_tasks: gpu.yml
+      when: want_gpu and gpu.stdout.find("NVIDIA") != -1
+          

@@ -1,5 +1,6 @@
 ---
-- name: Prepare GPU and Podman for FR 
+- name: Setup FR Services on RHEL 8 or 9
+  #- name: Prepare GPU and Podman for FR 
   #hosts: fr_laptops
   hosts: home
   become: yes
@@ -8,10 +9,13 @@
     subscription_password: "R2y1a1n@"
     base_dir: "/home/eyemetric"
     is_gpu: true
-    rhel_version: 9
-    register_rhel: true
+    rhel_ver: {{ ansible_distribution_major_version }}
+    register_rhel: false
+
   tasks:
     # Dependencies and prerequisites setup and install
+    # This works in the lab but in prod we won't be using 
+    # a dev subscription. The org may have their own
     - name: Register RHEL installation with sub
       community.general.redhat_subscription:
         state: present
