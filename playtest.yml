@@ -8,6 +8,9 @@
     subscription_password: "R2y1a1n@"
     appstream: rhel-{{ ansible_distribution_major_version }}-for-x86_64-appstream-rpms
     rhel_ver: "{{ ansible_distribution_major_version }}"
+    docker_user: "eyemetricfr"
+    docker_pwd: "19darkangel84"
+    env: "dev"
   tasks:
     - name: ping my hosts
       ping:
@@ -104,4 +107,8 @@
     - name: include gpu setup
       include_tasks: gpu.yml
       when: want_gpu and gpu.stdout.find("NVIDIA") != -1
-          
+    
+    - name: setup SAFR for cpu loads
+      include_tasks: fr_cpu_tasks.yml
+      when: want_gpu != true
+      tags: cpu

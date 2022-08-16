@@ -1,0 +1,46 @@
+################################################
+# FR setup for COU workloads
+# A different set of paravision containers are used
+# when running against the cpu. 
+################################################
+# notice become: no. we don't want to pull using sudo because
+# we don't want to run podman as root.
+#- name: podman login so we can pull our images
+#  become: no
+#  register: dock_login
+#  shell: podman login docker.io -u {{ docker_user }} -p {{ docker_pwd }}
+#- debug:
+#    var: dock_login
+
+
+#- name: test pull after login 
+#  become: no
+#  register: docker_pull
+#  shell: podman pull docker.io/paravision/postgres:12.0
+#- debug:
+#    var: docker_pull
+
+- name: podman login so we ca pull our images
+  become: no
+  register: dock_login
+  containers.podman.podman_login:
+    username: '{{ docker_user }}'
+    password: '{{ docker_pwd }}'
+    registry: docker.io
+
+- name: pull paravision containers
+  become: no
+  register: docker_pull
+  containers.podman.podman_image:
+    name: '{{ item.value }}'
+  loop: '{{ pv_images | dict2items }}'
+
+- debug: 
+    var: docker_pull
+
+- name: pull SAFR containers (same cpu or gpu)
+  become: no
+  register: docker_pull
+  containers.podman.podman_image:
+    name: '{{ item.value }}'
+  loop: '{{ safr_images | dict2items }}'

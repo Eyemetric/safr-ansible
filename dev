@@ -4,6 +4,9 @@
 #rhel 8 virt
 192.168.0.120
 
+[cpu:children]
+vm
+
 [vm:vars]
 want_gpu=false
 

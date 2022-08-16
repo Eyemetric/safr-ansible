@@ -1,0 +1,4 @@
+safr_images:
+    safr_api: docker.io/eyemetricfr/safr:v0.92
+    safr_cams: docker.io/eyemetricfr/safr-cams:v0.92
+    safrdb: docker.io/postgres:14.1
