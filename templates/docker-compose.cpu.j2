@@ -113,7 +113,6 @@ services:
         ports:
             - "5432:5432"
         volumes:
-          #- pv-data:/var/lib/postgresql/data:z
           - {{ app_dir }}/data/pvdb_pgdata/_data:/var/lib/postgresql/data:Z
 
     pvstrm:

@@ -63,12 +63,21 @@
     - debug:
         var: container_tools_8
           
-    - name: install podman-compose for RHEL 8|9 
+    - name: install podman-compose for RHEL 9
       dnf: 
         name: podman-compose
         state: latest
-      when: ansible_distribution == "RedHat"
-    
+      when:
+        - ansible_distribution == "RedHat"
+        - ansible_distribution_major_version == "9"
+
+    # RHEL 8 repos have too old a version of compose. netwk issues
+    - name: install podman-compose for RHEL 8 with pip
+      pip:
+        name: podman-compose
+      when:
+        - ansible_distribution == "RedHat"
+        - ansible_distribution_major_version == "8"
 
 
 #####################################
