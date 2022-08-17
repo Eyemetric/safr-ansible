@@ -133,7 +133,7 @@
     - debug:
         var: selabels
 
-    - name: restorecon all accessed devices
+    - name: restorecon all.yml accessed devices
       register: restcon_dev
       command: restorecon -Rv /dev
 

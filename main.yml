@@ -1,32 +1,14 @@
-- name: Test distro vars
+---
+- name: Install SAFR app and dependencies.
   hosts: all
   #hosts: lap
   remote_user: eyemetric
   become: yes
-  vars:
-    subscription_username: "brightblade42"
-    subscription_password: "R2y1a1n@"
-    appstream: rhel-{{ ansible_distribution_major_version }}-for-x86_64-appstream-rpms
-    rhel_ver: "{{ ansible_distribution_major_version }}"
-    docker_user: "eyemetricfr"
-    docker_pwd: "19darkangel84"
-    env: "dev"
   tasks:
-    - name: ping my hosts
-      ping:
-    - name: print msg
-      debug:
-        msg: Hello {{ ansible_distribution_major_version }} {{ ansible_nodename }}
-
-          #- name: Set authorized key taken from file
-          #ansible.posix.authorized_key:
-          #user: eyemetric
-          #state: present
-          #key: "{{ lookup('file', '/Users/ryan/.ssh/id_rsa.pub') }}"
-     # Dependencies and prerequisites setup and install
+    # Dependencies and prerequisites setup and install
     #################################################################################### 
     # PROPER REDHAT SPECIFIC ONLY
-    #################################################################################### 
+    ####################################################################################
     - name: RHSM Enable AppStream repo for RHEL 8 or 9
       community.general.rhsm_repository: 
         name: rhel-{{ ansible_distribution_major_version }}-for-x86_64-appstream-rpms
@@ -97,18 +79,68 @@
       shell: lspci 
       register: gpu
 
-    #- debug: var=gpu.stdout_lines
-
-    - name: do we have the gpu thing
-      register: has_gpu
-      debug: var=has_gpu
-      when: gpu.stdout.find("NVIDIA") != -1
-
-    - name: include gpu setup
+    - name: include gpu setup if an nvidia card is present
       include_tasks: gpu.yml
       when: want_gpu and gpu.stdout.find("NVIDIA") != -1
     
+    - name: copy safr app directory structure
+      file:
+        path: '{{ item }}'
+        state: directory
+        owner: '{{ local_user }}'
+        group: '{{ local_user }}'
+        recurse: true
+      loop:
+        - '{{ app_dir }}/cpu'
+        - '{{ app_dir }}/gpu'
+        - '{{ app_dir }}/data'
+        - '{{ app_dir }}/certs'
+      tags:
+        - foo
+
     - name: setup SAFR for cpu loads
       include_tasks: fr_cpu_tasks.yml
       when: want_gpu != true
-      tags: cpu
+      tags:
+        - foo
+
+     # our premade volumes save us from running a lot of setuo code.
+     # packed some tarbs in an image. clever or stupid?
+     # might be better to keep the archive with the ansible repo
+     # it's only about 10-12 MB
+    - name: setup pre made data volumes as starting point
+      become: no
+      register: data_container
+      shell: podman run -d --rm --name dbdata docker.io/eyemetricfr/dbdata:v0.92
+
+    - debug:
+        var: data_container
+
+    - name: copy data volumes from data container to volume dir
+      become: no
+      register: data_copy
+      shell: |
+        podman cp dbdata:/safr_pgdata.gz.tar /tmp
+        podman cp dbdata:/pvdb_pgdata.gz.tar /tmp
+
+    - debug:
+        var: data_copy
+
+    - name: Stop dbdata container
+      become: no
+      containers.podman.podman_container:
+        name: dbdata
+        state: stopped
+
+    - name: Extract data volume archives to volume location
+      unarchive:
+        src:  '{{ item }}'
+        dest: '{{ app_dir }}/data'
+        remote_src: yes
+        owner: '{{ local_user }}'
+        group: '{{ local_user }}'
+      loop:
+        - /tmp/safr_pgdata.gz.tar
+        - /tmp/pvdb_pgdata.gz.tar
+      tags:
+        - arch

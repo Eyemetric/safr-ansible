@@ -7,9 +7,6 @@
 [cpu:children]
 vm
 
-[vm:vars]
-want_gpu=false
-
 [metal]
 #rhel 9
 192.168.0.137

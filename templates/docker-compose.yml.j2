@@ -1,0 +1,160 @@
+#version: "3.9"
+services:
+    safrdb:
+        image: docker.io/postgres:14.1
+        container_name: safrdb
+        restart: always
+        environment:
+            - POSTGRES_USER=admin
+            - POSTGRES_PASSWORD=admin
+            - POSTGRES_DB=safr
+            - TZ="America/New_York"
+        ports:
+            - "5433:5432"
+            #- "80:5432"
+        volumes:
+          #- safr-db:/var/lib/postgresql/data
+          - /home/eyemetric/fr/data/safrdb/_data:/var/lib/postgresql/data:Z
+            # - safr-db:/var/lib/postgresql/data:z
+              #- /etc/timezone:/etc/timezone:ro
+              #- /etc/localtime:/etc/localtime:ro
+
+    safr-api:
+        image: docker.io/eyemetricfr/safr:v0.92
+        container_name: safr-api
+        restart: always
+        ports:
+           - "8085:3030"
+             #- "443:443"
+        environment:
+            - SAFR_DB_ADDR=192.168.3.48
+            - SAFR_DB_PORT=5433
+            - VID_STREAM_ADDR=192.168.3.48:5000
+            - DETECT_ADDR=192.168.3.48:5050
+            - ALERTS_ADDR=192.168.3.48:5051
+            - IDENT_API=http://192.168.3.48:8080/v4/
+            - PROC_API=http://192.168.3.48:8081/v6/
+            - FR_API=192.168.3.48:443
+            - TPASS_USER=admin
+            - TPASS_PWD=njbs1968
+            - TPASS_ADDR=https://devsys01.tpassvms.com/tpassservice/
+            - MIN_MATCH=0
+            - MATCH_EXPIRES=10
+            - MIN_QUALITY=0.8
+            - MIN_DUPE_MATCH=0.98
+            - RUST_LOG=warn,pvwarp=debug
+            - TZ="America/New_York"
+        volumes:
+          #- /etc/timezone:/etc/timezone:ro
+          #  - /etc/localtime:/etc/localtime:ro
+            - "/home/eyemetric/cert:/cert"
+
+    safr-cams:
+        image: docker.io/eyemetricfr/safr-cams:v0.92
+        container_name: safr-cams
+        restart: always
+        ports:
+           - "3031:80"
+           - "3032:443"
+        environment:
+            - SAFR_DB_ADDR=192.168.3.48
+            - SAFR_DB_PORT=5433
+            - VID_STREAM_ADDR=192.168.3.48:5000
+            - DETECT_ADDR=192.168.3.48:5050
+            - ALERTS_ADDR=192.168.3.48:5051
+            - FR_API=http://192.168.3.48:8085
+            - MIN_MATCH=0.50
+            - MATCH_EXPIRES=10
+            - MIN_QUALITY=0.8
+            - CONSOLE_LOOKUP=false
+            - ASPNETCORE_URLS=http://+80
+              #- ASPNETCORE_URLS=https://+443;http://+80
+              #- ASPNETCORE_HTTPS_PORT=443
+              #- ASPNETCORE_Kestrel__Certificates__Default__Password=eyemetric
+              #- ASPNETCORE_Kestrel__Certificates__Default__Path=/https/EyemetricFR.Server.pfx
+            - TZ="America/New_York"
+        volumes:
+            - /home/eyemetric/.aspnet/https:/https
+              #- /etc/timezone:/etc/timezone:ro
+              #- /etc/localtime:/etc/localtime:ro
+
+    proc:
+        image: docker.io/paravision/processor:v6-gen5-balanced-tensorrt
+        container_name: proc-v6
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                      - capabilities: [gpu]
+        environment:
+            - PV_HTTP_INTERFACE=on
+            - PV_INFERENCE_WORKERS=1
+        network_mode: bridge
+        restart: always
+        ports:
+            - "50051:50051"
+            - "8081:8081"
+    ident:
+        image: docker.io/paravision/identity:v4.0.0
+        container_name: ident-v4
+        environment:
+            - POSTGRES_URI=postgresql://admin:admin@pvdb:5432/identity?sslmode=disable
+            - HTTP_PROXY=on
+        network_mode: bridge
+        restart: always
+        ports:
+            - "5656:5656"
+            - "8080:8080"
+        depends_on:
+            - pvdb
+        links:
+            - pvdb
+    pvdb:
+        image: docker.io/paravision/postgres:12.0
+        container_name: pvdb
+        network_mode: bridge
+        restart: always
+        environment:
+            - POSTGRES_USER=admin
+            - POSTGRES_PASSWORD=admin
+            - POSTGRES_DB=identity
+        ports:
+            - "5432:5432"
+        volumes:
+          #- pv-data:/var/lib/postgresql/data:z
+          - /home/eyemetric/fr/data/pvdata/_data:/var/lib/postgresql/data:Z
+
+    pvstrm:
+        image: docker.io/paravision/streaming:v6.0.0-tensorrt
+        container_name: streaming-v6
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                      - capabilities: [gpu]
+        environment:
+            - TZ="America/New_York"
+            - PV_INFERENCE_WORKERS=1
+            - PV_POSTPROCESSOR_WORKERS=1
+            - PV_OUTPUT_FACES_ONLY=True
+            - PV_FACE_QUALITY_TRACKING=0.50
+            - NVIDIA_VISIBLE_DEVICES=all
+            - NVIDIA_DRIVER_CAPABILITIES=all
+        network_mode: bridge
+        restart: always
+        ports:
+            - "5000:5000"
+            - "5050:5050"
+            - "5051:5051"
+        volumes:
+            - type: tmpfs
+              target: /dev/shm
+              tmpfs:
+                  size: 3g #000000000 # ~6gb
+
+        depends_on:
+            - pvdb
+        
+volumes:
+    pv-data:
+    safr-db:

@@ -1,26 +1,12 @@
+---
 ################################################
-# FR setup for COU workloads
+# FR setup for CPU workloads
 # A different set of paravision containers are used
 # when running against the cpu. 
 ################################################
 # notice become: no. we don't want to pull using sudo because
-# we don't want to run podman as root.
-#- name: podman login so we can pull our images
-#  become: no
-#  register: dock_login
-#  shell: podman login docker.io -u {{ docker_user }} -p {{ docker_pwd }}
-#- debug:
-#    var: dock_login
 
-
-#- name: test pull after login 
-#  become: no
-#  register: docker_pull
-#  shell: podman pull docker.io/paravision/postgres:12.0
-#- debug:
-#    var: docker_pull
-
-- name: podman login so we ca pull our images
+- name: use podman login so we ca pull our images
   become: no
   register: dock_login
   containers.podman.podman_login:
@@ -28,7 +14,7 @@
     password: '{{ docker_pwd }}'
     registry: docker.io
 
-- name: pull paravision containers
+- name: pull openvino based paravision containers
   become: no
   register: docker_pull
   containers.podman.podman_image:
@@ -38,9 +24,27 @@
 - debug: 
     var: docker_pull
 
-- name: pull SAFR containers (same cpu or gpu)
+- name: pull SAFR containers from docker.io (same cpu or gpu)
   become: no
   register: docker_pull
   containers.podman.podman_image:
     name: '{{ item.value }}'
   loop: '{{ safr_images | dict2items }}'
+
+- name: copy config template files to app directories
+  template:
+    src: var.env.j2
+    dest: '{{ app_dir }}/cpu/var.env'
+    owner: '{{ local_user }}'
+    group: '{{ local_user }}'
+  tags:
+    - foo
+    -
+- name: copy docker-compose template
+  template:
+    src: docker-compose.cpu.j2
+    dest: '{{ app_dir }}/cpu/docker-compose.yml'
+    owner: '{{ local_user }}'
+    group: '{{ local_user }}'
+  tags:
+    - foo
