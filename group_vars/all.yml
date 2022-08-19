@@ -22,7 +22,7 @@ detect_addr: "{{ local_ip }}:5050"
 alerts_addr: "{{ local_ip }}:5051"
 ident_api: "http://{{ local_ip }}:8080/v4/"
 proc_api: "http://{{ local_ip }}:8081/v6/"
-fr_api: "{{ local_ip }}:{{ safr_api_http_port }}"
+fr_api: "http://{{ local_ip }}:{{ safr_api_http_port }}"
 tpass_user: "admin"
 tpass_pwd: "njbs1968"
 safr_api_min_match: 0
@@ -46,7 +46,7 @@ pv_proc_port_2: 8081
 pv_pg_user: "admin"
 pv_pg_pwd: "admin"
 pv_db_name: "identity"
-postgres_uri: "postgresql://{{pv_pg_user }}:{{ pv_pg_pwd }}@pvdb:5432/{{ pv_db_name }}?sslmode=disable"
+postgres_uri: "postgresql://{{pv_pg_user }}:{{ pv_pg_pwd }}@{{ local_ip }}:5432/{{ pv_db_name }}?sslmode=disable"
 http_proxy: "on"
 pv_ident_port_1: 5656
 pv_ident_port_2: 8080
