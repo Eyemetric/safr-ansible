@@ -1,0 +1,17 @@
+---
+- name: Test some tasks before putting in main ansible
+  hosts: all
+  #hosts: lap
+  remote_user: eyemetric
+  become: yes
+
+  tasks:
+    - name: Create private key (RSA, 4096 bits)
+      community.crypto.openssl_privatekey:
+        path: '{{ cert_dir }}/safr-api.key'
+
+    - name: Create simple self-signed certificate
+      community.crypto.x509_certificate:
+        path: '{{ cert_dir}}/safr-api.pem'
+        privatekey_path: '{{ cert_dir }}/safr-api.key'
+        provider: selfsigned

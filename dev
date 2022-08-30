@@ -7,11 +7,11 @@
 [cpu:children]
 vm
 
-[metal]
+[gpu]
 #rhel 9
 192.168.0.137
 
-[metal:vars]
+[gpu:vars]
 want_gpu=true
 
 [alma]

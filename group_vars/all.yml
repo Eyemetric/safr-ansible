@@ -15,14 +15,15 @@ safr_db_pwd: "admin"
 safr_db_name: "safr"
 safr_db_port: 5433
 # safr api env
-safr_api_http_port: 80
+safr_api_http_port: 443
 safr_api_https_port: 443
 vid_stream_addr: "{{ local_ip }}:5000"
 detect_addr: "{{ local_ip }}:5050"
 alerts_addr: "{{ local_ip }}:5051"
 ident_api: "http://{{ local_ip }}:8080/v4/"
 proc_api: "http://{{ local_ip }}:8081/v6/"
-fr_api: "http://{{ local_ip }}:{{ safr_api_http_port }}"
+#fr_api: "http://{{ local_ip }}:{{ safr_api_http_port }}"
+fr_api: "https://{{ local_ip }}:{{ safr_api_https_port }}"
 tpass_user: "admin"
 tpass_pwd: "njbs1968"
 safr_api_min_match: 0
@@ -67,6 +68,6 @@ app_dir: "/opt/eyemetric/fr"
 cert_dir: '{{app_dir}}/certs'
 
 safr_images:
-    safr_api: docker.io/eyemetricfr/safr:v0.92
+    safr_api: docker.io/eyemetricfr/safr:v0.92-tls
     safr_cams: docker.io/eyemetricfr/safr-cams:v0.92
     safrdb: docker.io/postgres:14.1

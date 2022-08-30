@@ -77,7 +77,14 @@ services:
 
     proc:
         image: {{ pv_images.processor }}
+        security_opt:
+            - "label=type:nvidia_container_t"
         container_name: proc-v6
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                      - capabilities: [gpu]
         environment:
             - PV_HTTP_INTERFACE={{ pv_http_interface }}
             - PV_INFERENCE_WORKERS={{ pv_inference_workers }}
@@ -117,13 +124,22 @@ services:
 
     pvstrm:
         image: {{ pv_images.streaming }}
+        security_opt:
+            - "label=type:nvidia_container_t"
         container_name: streaming-v6
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                      - capabilities: [gpu]
         environment:
             - TZ="{{ tz }}"
             - PV_INFERENCE_WORKERS={{ PV_INFERENCE_WORKERS }}
             - PV_POSTPROCESSOR_WORKERS={{ PV_POSTPROCESSOR_WORKERS }}
             - PV_OUTPUT_FACES_ONLY={{ PV_OUTPUT_FACES_ONLY }}
             - PV_FACE_QUALITY_TRACKING={{ PV_FACE_QUALITY_TRACKING }}
+            - NVIDIA_VISIBLE_DEVICES=all
+            - NVIDIA_DRIVER_CAPABILITIES=all
         network_mode: bridge
         restart: always
         ports:

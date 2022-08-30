@@ -21,7 +21,7 @@ services:
         container_name: safr-api
         restart: always
         ports:
-           #- "{{ safr_api_http_port }}:3030"
+            - "{{ safr_api_http_port }}:3030"
             - "{{ safr_api_https_port }}:443"
         environment:
             - SAFR_DB_ADDR={{ local_ip }}

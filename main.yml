@@ -7,7 +7,7 @@
   tasks:
     # Dependencies and prerequisites setup and install
     #################################################################################### 
-    # PROPER REDHAT SPECIFIC ONLY
+    # ENABLE REDHAT REPOSITORIES
     ####################################################################################
     - name: RHSM Enable AppStream repo for RHEL 8 or 9
       community.general.rhsm_repository: 
@@ -44,7 +44,10 @@
         state: latest
       when: ansible_distribution == "RedHat"
 
-    # what is in container-tools. ALMA doesn't know about this or seem to need it. 
+    #================================================
+    # Install Container requirements
+    #================================================
+    # what is in container-tools. ALMA doesn't know about this or seem to need it.
     - name: install container-tools for RHEL 9 
       dnf: 
         name: container-tools
@@ -72,6 +75,7 @@
         - ansible_distribution_major_version == "9"
 
     # RHEL 8 repos have too old a version of compose. netwk issues
+    # Seems like RHEL 8 has python installed by default so pip is available.
     - name: install podman-compose for RHEL 8 with pip
       pip:
         name: podman-compose
@@ -88,10 +92,7 @@
       shell: lspci 
       register: gpu
 
-    - name: include gpu setup if an nvidia card is present
-      include_tasks: gpu.yml
-      when: want_gpu and gpu.stdout.find("NVIDIA") != -1
-    
+
     - name: copy safr app directory structure
       file:
         path: '{{ item }}'
@@ -113,6 +114,10 @@
       tags:
         - foo
 
+    - name: include gpu setup if an nvidia card is present
+      include_tasks: fr_gpu_tasks.yml
+      when: want_gpu and gpu.stdout.find("NVIDIA") != -1
+
      # our premade volumes save us from running a lot of setuo code.
      # packed some tarbs in an image. clever or stupid?
      # might be better to keep the archive with the ansible repo
@@ -125,7 +130,7 @@
     - debug:
         var: data_container
 
-    - name: copy data volumes from data container to volume dir
+    - name: copy data volumes from data container to tmp dir
       become: no
       register: data_copy
       shell: |
@@ -153,3 +158,32 @@
         - /tmp/pvdb_pgdata.gz.tar
       tags:
         - arch
+
+   ###############################################
+   # Create self signed cert  for safr-api service
+   ###############################################
+    - name: install python pip
+      dnf:
+        name: python3-pip
+        state: latest
+
+    - name: install pyOpenSSL
+      pip:
+        name: pyOpenSSL
+
+
+    - name: Create private key (RSA, 4096 bits)
+      community.crypto.openssl_privatekey:
+        path: '{{ cert_dir }}/safr-api.key'
+
+    - name: Create simple self-signed certificate
+      community.crypto.x509_certificate:
+        path: '{{ cert_dir}}/safr-api.pem'
+        privatekey_path: '{{ cert_dir }}/safr-api.key'
+        provider: selfsigned
+
+    - name: "Set unpriviledged port access to start at 443"
+      lineinfile:
+        path: /etc/sysctl.conf
+        insertafter: EOF
+        line: net.ipv4.ip_unprivileged_port_start=443

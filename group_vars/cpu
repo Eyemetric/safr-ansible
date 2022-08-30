@@ -1,4 +1,5 @@
 want_gpu: false
+app_type: "cpu"
 
 pv_images:
     pvdb: docker.io/paravision/postgres:12.0
