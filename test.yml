@@ -6,12 +6,56 @@
   become: yes
 
   tasks:
-    - name: Create private key (RSA, 4096 bits)
-      community.crypto.openssl_privatekey:
-        path: '{{ cert_dir }}/safr-api.key'
+    - name: "create user dir for eyemetric.service unit"
+      file:
+        path: '/home/{{ local_user }}/.config/systemd/user'
+        state: directory
+        owner: '{{ local_user }}'
+        group: '{{ local_user }}'
+        mode: '0744'
 
-    - name: Create simple self-signed certificate
-      community.crypto.x509_certificate:
-        path: '{{ cert_dir}}/safr-api.pem'
-        privatekey_path: '{{ cert_dir }}/safr-api.key'
-        provider: selfsigned
+    - name: "Copy eyemetric.service systemd unit file"
+      template:
+        src: eyemetric.service.j2
+        dest: "/home/{{ local_user }}/.config/systemd/user/eyemetric.service"
+        owner: '{{ local_user }}'
+        group: '{{ local_user }}'
+        mode: '0644'
+
+    - name: get the uid of the user
+      command: "id -u {{ local_user }}"
+      register: the_uid
+      check_mode: no
+      changed_when: false
+
+    - debug:
+        var: the_uid
+
+    - name: "Determine XDG_RUNTIME_DIR"
+      set_fact:
+        xdg_runtime_dir: "/run/user/{{ the_uid.stdout }}"
+      changed_when: false
+
+    - name: Enable eyemetric.service
+      become_user: eyemetric
+      environment:
+        XDG_RUNTIME_DIR: "{{ xdg_runtime_dir }}"
+      systemd:
+        scope: user
+        daemon_reload: yes
+        enabled: yes
+        name: eyemetric.service
+        state: stopped
+
+
+    - name: Check if user is lingering
+      stat:
+        path: "/var/lib/systemd/linger/{{ local_user }}"
+      register: user_lingering
+
+    - debug:
+        var: user_lingering
+
+    - name: Enable linger for "{{ local_user }}" user
+      ansible.builtin.command: "loginctl enable-linger {{ local_user }}"
+      when: not user_lingering.stat.exists

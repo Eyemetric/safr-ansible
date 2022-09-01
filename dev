@@ -1,21 +1,20 @@
-[vm]
-#rhel 9 virt
+[local_vm]
+#rhel 9
 192.168.0.88
-#rhel 8 virt
+#rhel 8
 192.168.0.120
 
 [cpu:children]
-vm
+local_vm
 
 [gpu]
-#rhel 9
+#rhel 9 laptop
 192.168.0.137
+#rhel 9 office
+173.220.177.74
 
 [gpu:vars]
 want_gpu=true
 
-[alma]
-192.168.0.177 
-192.168.0.43 
-#alma9 virt
-192.168.0.119
+[office]
+173.220.177.74

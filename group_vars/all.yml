@@ -9,7 +9,8 @@ env: "dev"
 
 local_ip: '{{ ansible_host }}'
 local_user: '{{ ansible_user }}'
-tpass_svc: "https://devsys01.tpassvms.com/tpassservice/"
+#tpass_svc: "https://devsys01.tpassvms.com/tpassservice/"
+tpass_svc: "https://devsys01.tpassvms.com/TpassPVService/"
 safr_db_user: "admin"
 safr_db_pwd: "admin"
 safr_db_name: "safr"
