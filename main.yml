@@ -39,3 +39,11 @@
 
     - name: Run systemd user tasks
       include_tasks: systemd_user_tasks.yml
+
+    - name: Add a few cmd aliases for convenience
+      blockinfile:
+        path: "/home/{{ eyemetric_user }}/.bashrc"
+        block: |
+          alias start_fr="systemctl --user start eyemetric"
+          alias stop_fr="systemctl --user stop eyemetric"
+          alias stat_fr="systemctl --user status eyemetric"

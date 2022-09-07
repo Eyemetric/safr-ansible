@@ -19,6 +19,13 @@
   tags:
     - foo
 
+- name: copy safr test scripts
+  copy:
+    src: scripts
+    dest: '{{ app_dir }}'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0774'
 
 - name: setup SAFR for cpu loads
   include_tasks: fr_cpu_tasks.yml
