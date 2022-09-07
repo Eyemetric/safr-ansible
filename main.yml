@@ -36,3 +36,6 @@
 
     - name: Run OpenSsl tasks for https only
       include_tasks: openssl_tasks.yml
+
+    - name: Run systemd user tasks
+      include_tasks: systemd_user_tasks.yml
