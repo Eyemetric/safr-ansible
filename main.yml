@@ -1,7 +1,6 @@
 ---
-- name: Install SAFR app and dependencies.
+- name: Install SAFR services and dependencies.
   hosts: all
-  #hosts: lap
   remote_user: "{{ eyemetric_user }}"
   become: yes
   tasks:
@@ -40,7 +39,7 @@
     - name: Run systemd user tasks
       include_tasks: systemd_user_tasks.yml
 
-    - name: Add a few cmd aliases for convenience
+    - name: Add a few cmd aliases for convenience to .bashrc
       blockinfile:
         path: "/home/{{ eyemetric_user }}/.bashrc"
         block: |

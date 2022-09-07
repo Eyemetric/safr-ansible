@@ -3,76 +3,20 @@
   hosts: all
   #hosts: lap
   vars:
-    #ssh_user: eyemetric
-    ssh_user: safr_user1
-    #the unpriviledged user that will run podman services.
-    safr_user: safr_user1
-    #safr_user: eyemetric
-    safr_group: eyemetric
-  remote_user: "{{ ssh_user }}"
+    overwrite_data_volumes: false
+  remote_user: "eyemetric"
   become: yes
 
   tasks:
+    - name: check for existance of data volume
+      ansible.builtin.stat:
+        path: "{{ app_dir }}/data/pvdb_pgdata"
+      register: data_vol
 
-    - name: "create user dir for eyemetric.service unit"
-      file:
-        path: '/home/{{ safr_user }}/.config/systemd/user'
-        state: directory
-        owner: '{{ safr_user }}'
-        group: '{{ safr_group }}'
-        mode: '0744'
-
-    - name: create the .ansible/tmp dir with permissions
-      file:
-        path: '/home/{{ safr_user }}/.ansible/tmp'
-        state: directory
-        owner: '{{ safr_user }}'
-        group: '{{ safr_group }}'
-        mode: '0777'
-
-    - name: "Copy eyemetric.service systemd unit file"
-      #become_user: "{{ safr_user }}"
-      template:
-        src: eyemetric.service.j2
-        dest: "/home/{{ safr_user }}/.config/systemd/user/eyemetric.service"
-        owner: '{{ safr_user }}'
-        group: '{{ safr_group }}'
-        mode: '0664'
-
-    - name: get the uid of the user
-      command: "id -u {{ safr_user }}"
-      register: the_uid
-      check_mode: no
-      changed_when: false
-
-    - debug:
-        var: the_uid
-
-    - name: "Determine XDG_RUNTIME_DIR"
-      set_fact:
-        xdg_runtime_dir: "/run/user/{{ the_uid.stdout }}"
-      changed_when: false
-
-    - name: Enable eyemetric.service
-      become_user: "{{ safr_user }}"
-      environment:
-        XDG_RUNTIME_DIR: "{{ xdg_runtime_dir }}"
-      systemd:
-        scope: user
-        daemon_reload: yes
-        enabled: yes
-        name: eyemetric.service
-        state: stopped
+    - name: We should skip copying the data volume
+      debug:
+        var: data_vol
+      when: data_vol.stat.exists != True or overwrite_data_volumes
 
 
-    - name: Check if user is lingering
-      stat:
-        path: "/var/lib/systemd/linger/{{ safr_user }}"
-      register: user_lingering
 
-    - debug:
-        var: user_lingering
-
-    - name: Enable linger for "{{ safr_user }}" user
-      ansible.builtin.command: "loginctl enable-linger {{ safr_user }}"
-      when: not user_lingering.stat.exists

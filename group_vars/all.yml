@@ -90,6 +90,8 @@ app_ver: "v0.92"
 pg_ver: "14.1"
 app_dir: "/opt/eyemetric/fr"
 cert_dir: '{{app_dir}}/certs'
+# don't overwrite any existing volumes.
+overwrite_data_volumes: false
 
 ################################################
 # List of OCI images representing our application

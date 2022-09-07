@@ -59,8 +59,6 @@
     path: "/var/lib/systemd/linger/{{ eyemetric_user }}"
   register: user_lingering
 
-- debug:
-    var: user_lingering
 
 - name: Enable linger for "{{ eyemetric_user }}" user
   ansible.builtin.command: "loginctl enable-linger {{ eyemetric_user }}"

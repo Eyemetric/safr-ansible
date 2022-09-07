@@ -44,46 +44,64 @@
     when: gpu.stdout.find("NVIDIA") != -1
   when: want_gpu
 
-# our premade volumes save us from running a lot of setuo code.
-# packed some tarbs in an image. clever or stupid?
-# might be better to keep the archive with the ansible repo
-# it's only about 10-12 MB
-- name: setup pre made data volumes as starting point
-  become: no
-  register: data_container
-  #shell: podman run -d --rm --name dbdata docker.io/eyemetricfr/dbdata:v0.92
-  shell: 'podman run -d --rm --name dbdata {{ dbdata_image }}'
 
-- debug:
-    var: data_container
+- name: check for existing pv data volume (existing installation)
+  ansible.builtin.stat:
+    path: "{{ app_dir }}/data/pvdb_pgdata"
+  register: data_vol
 
-- name: copy data volumes from data container to tmp dir
-  become: no
-  register: data_copy
-  shell: |
-    podman cp dbdata:/safr_pgdata.gz.tar /tmp
-    podman cp dbdata:/pvdb_pgdata.gz.tar /tmp
 
-- debug:
-    var: data_copy
+- block:
 
-- name: Stop dbdata container
-  become: no
-  containers.podman.podman_container:
-    name: dbdata
-    state: stopped
+  - name: back up the existing data volumes as a failsafe to /tmp dir.
+    become: no
+    community.general.archive:
+      path: "{{ app_dir }}/data"
+      dest: "/tmp/data_vol.bk.tgz"
+      owner: "{{ eyemetric_user }}"
+      group: '{{ eyemetric_group }}'
+      mode: "0774"
+    when: data_vol.stat.exists
 
-- name: Extract data volume archives to volume location
-  unarchive:
-    src:  '{{ item }}'
-    dest: '{{ app_dir }}/data'
-    remote_src: yes
-    owner: '{{ eyemetric_user }}'
-    group: '{{ eyemetric_group }}'
-    mode: '0774'
-  loop:
-    - /tmp/safr_pgdata.gz.tar
-    - /tmp/pvdb_pgdata.gz.tar
-  tags:
-    - arch
+  # our premade volumes save us from running a lot of setuo code.
+  # packed some tarbs in an image. clever or stupid?
+  # might be better to keep the archive with the ansible repo
+  # it's only about 10-12 MB
+  - name: setup pre made data volumes as starting point
+    become: no
+    register: data_container
+    shell: 'podman run -d --rm --name dbdata {{ dbdata_image }}'
 
+  - debug:
+      var: data_container
+
+  - name: copy data volumes from data container to tmp dir
+    become: no
+    register: data_copy
+    shell: |
+      podman cp dbdata:/safr_pgdata.gz.tar /tmp
+      podman cp dbdata:/pvdb_pgdata.gz.tar /tmp
+
+  - debug:
+      var: data_copy
+
+  - name: Stop dbdata container
+    become: no
+    containers.podman.podman_container:
+      name: dbdata
+      state: stopped
+
+  - name: Extract data volume archives to volume location
+    unarchive:
+      src:  '{{ item }}'
+      dest: '{{ app_dir }}/data'
+      remote_src: yes
+      owner: '{{ eyemetric_user }}'
+      group: '{{ eyemetric_group }}'
+      mode: '0774'
+    loop:
+      - /tmp/safr_pgdata.gz.tar
+      - /tmp/pvdb_pgdata.gz.tar
+    tags:
+      - arch
+  when: data_vol.stat.exists != True or overwrite_data_volumes
