@@ -122,8 +122,8 @@
   template:
     src: var.env.j2
     dest: '{{ app_dir }}/gpu/var.env'
-    owner: '{{ local_user }}'
-    group: '{{ local_user }}'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_user }}'
   tags:
     - foo
     -
@@ -131,7 +131,7 @@
   template:
     src: docker-compose.gpu.j2
     dest: '{{ app_dir }}/gpu/docker-compose.yml'
-    owner: '{{ local_user }}'
-    group: '{{ local_user }}'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_user }}'
   tags:
     - foo

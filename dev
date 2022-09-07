@@ -1,11 +1,11 @@
-[local_vm]
+[prox_mox]
 #rhel 9
 192.168.0.88
 #rhel 8
 192.168.0.120
 
 [cpu:children]
-local_vm
+prox_mox
 
 [gpu]
 #rhel 9 laptop
@@ -18,3 +18,7 @@ want_gpu=true
 
 [office]
 173.220.177.74
+
+[home-lap]
+192.168.0.137
+

@@ -2,28 +2,45 @@
 - name: Test some tasks before putting in main ansible
   hosts: all
   #hosts: lap
-  remote_user: eyemetric
+  vars:
+    #ssh_user: eyemetric
+    ssh_user: safr_user1
+    #the unpriviledged user that will run podman services.
+    safr_user: safr_user1
+    #safr_user: eyemetric
+    safr_group: eyemetric
+  remote_user: "{{ ssh_user }}"
   become: yes
 
   tasks:
+
     - name: "create user dir for eyemetric.service unit"
       file:
-        path: '/home/{{ local_user }}/.config/systemd/user'
+        path: '/home/{{ safr_user }}/.config/systemd/user'
         state: directory
-        owner: '{{ local_user }}'
-        group: '{{ local_user }}'
+        owner: '{{ safr_user }}'
+        group: '{{ safr_group }}'
         mode: '0744'
 
+    - name: create the .ansible/tmp dir with permissions
+      file:
+        path: '/home/{{ safr_user }}/.ansible/tmp'
+        state: directory
+        owner: '{{ safr_user }}'
+        group: '{{ safr_group }}'
+        mode: '0777'
+
     - name: "Copy eyemetric.service systemd unit file"
+      #become_user: "{{ safr_user }}"
       template:
         src: eyemetric.service.j2
-        dest: "/home/{{ local_user }}/.config/systemd/user/eyemetric.service"
-        owner: '{{ local_user }}'
-        group: '{{ local_user }}'
-        mode: '0644'
+        dest: "/home/{{ safr_user }}/.config/systemd/user/eyemetric.service"
+        owner: '{{ safr_user }}'
+        group: '{{ safr_group }}'
+        mode: '0664'
 
     - name: get the uid of the user
-      command: "id -u {{ local_user }}"
+      command: "id -u {{ safr_user }}"
       register: the_uid
       check_mode: no
       changed_when: false
@@ -37,7 +54,7 @@
       changed_when: false
 
     - name: Enable eyemetric.service
-      become_user: eyemetric
+      become_user: "{{ safr_user }}"
       environment:
         XDG_RUNTIME_DIR: "{{ xdg_runtime_dir }}"
       systemd:
@@ -50,12 +67,12 @@
 
     - name: Check if user is lingering
       stat:
-        path: "/var/lib/systemd/linger/{{ local_user }}"
+        path: "/var/lib/systemd/linger/{{ safr_user }}"
       register: user_lingering
 
     - debug:
         var: user_lingering
 
-    - name: Enable linger for "{{ local_user }}" user
-      ansible.builtin.command: "loginctl enable-linger {{ local_user }}"
+    - name: Enable linger for "{{ safr_user }}" user
+      ansible.builtin.command: "loginctl enable-linger {{ safr_user }}"
       when: not user_lingering.stat.exists

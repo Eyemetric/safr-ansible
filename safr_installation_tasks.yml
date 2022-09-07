@@ -1,0 +1,82 @@
+---
+#####################################
+# Do we have a GPU capable machine? if so use the gpu workload
+# otherwise we're cpu based
+#####################################
+
+- name: copy safr app directory structure
+  file:
+    path: '{{ item }}'
+    state: directory
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_user }}'
+    recurse: true
+  loop:
+    - '{{ app_dir }}/cpu'
+    - '{{ app_dir }}/gpu'
+    - '{{ app_dir }}/data'
+    - '{{ app_dir }}/certs'
+  tags:
+    - foo
+
+
+- name: setup SAFR for cpu loads
+  include_tasks: fr_cpu_tasks.yml
+  when: want_gpu != true
+  tags:
+    - foo
+
+# gpu block
+- block:
+  - name: Check GPU capabilities
+    shell: lspci
+    register: gpu
+
+  - name: include gpu setup if an nvidia card is present
+    include_tasks: fr_gpu_tasks.yml
+    when: gpu.stdout.find("NVIDIA") != -1
+  when: want_gpu
+
+# our premade volumes save us from running a lot of setuo code.
+# packed some tarbs in an image. clever or stupid?
+# might be better to keep the archive with the ansible repo
+# it's only about 10-12 MB
+- name: setup pre made data volumes as starting point
+  become: no
+  register: data_container
+  #shell: podman run -d --rm --name dbdata docker.io/eyemetricfr/dbdata:v0.92
+  shell: 'podman run -d --rm --name dbdata {{ dbdata_image }}'
+
+- debug:
+    var: data_container
+
+- name: copy data volumes from data container to tmp dir
+  become: no
+  register: data_copy
+  shell: |
+    podman cp dbdata:/safr_pgdata.gz.tar /tmp
+    podman cp dbdata:/pvdb_pgdata.gz.tar /tmp
+
+- debug:
+    var: data_copy
+
+- name: Stop dbdata container
+  become: no
+  containers.podman.podman_container:
+    name: dbdata
+    state: stopped
+
+- name: Extract data volume archives to volume location
+  unarchive:
+    src:  '{{ item }}'
+    dest: '{{ app_dir }}/data'
+    remote_src: yes
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0774'
+  loop:
+    - /tmp/safr_pgdata.gz.tar
+    - /tmp/pvdb_pgdata.gz.tar
+  tags:
+    - arch
+

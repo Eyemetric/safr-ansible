@@ -35,8 +35,8 @@
   template:
     src: var.env.j2
     dest: '{{ app_dir }}/cpu/var.env'
-    owner: '{{ local_user }}'
-    group: '{{ local_user }}'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_user }}'
   tags:
     - foo
     -
@@ -44,7 +44,7 @@
   template:
     src: docker-compose.cpu.j2
     dest: '{{ app_dir }}/cpu/docker-compose.yml'
-    owner: '{{ local_user }}'
-    group: '{{ local_user }}'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_user }}'
   tags:
     - foo

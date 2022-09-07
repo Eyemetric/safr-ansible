@@ -2,197 +2,37 @@
 - name: Install SAFR app and dependencies.
   hosts: all
   #hosts: lap
-  remote_user: eyemetric
+  remote_user: "{{ eyemetric_user }}"
   become: yes
   tasks:
-    # Dependencies and prerequisites setup and install
-    #################################################################################### 
-    # ENABLE REDHAT REPOSITORIES
-    ####################################################################################
-    - name: RHSM Enable AppStream repo for RHEL 8 or 9
-      community.general.rhsm_repository: 
-        name: rhel-{{ ansible_distribution_major_version }}-for-x86_64-appstream-rpms
-      when: ansible_distribution == "RedHat"
-    
-    - name: RHSM enable BaseOS repo RHEL 8 or 9 
-      community.general.rhsm_repository:
-        name: rhel-{{ ansible_distribution_major_version }}-for-x86_64-baseos-rpms
+
+    - name: Enable required RHEL 8 | 9 Repositories
+      include_tasks: enable_rhel_repo_tasks.yml
       when: ansible_distribution == "RedHat"
 
-    - name: RHSM enable a CodeReady repo RHEL 8 or 9
-      community.general.rhsm_repository:
-        name: codeready-builder-for-rhel-{{ ansible_distribution_major_version }}-x86_64-rpms
-      register: codeready
-      when: ansible_distribution == "RedHat"
-    
-    - name: Import epel gpg key for RHEL 8 or 9 
-      rpm_key: 
-        state: present
-        key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-{{ rhel_ver }}
-      when: ansible_distribution == "RedHat"
-
-    - name: install EPEL Repo on RHEL 8 or 9
-      dnf: 
-        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ rhel_ver }}.noarch.rpm
-        state: latest 
-      when: ansible_distribution == "RedHat"
-
-    - name: dnf update RHEL 
+    - name: dnf update RHEL
       register: dnf_update
       ansible.builtin.dnf:
         name: "*"
         state: latest
       when: ansible_distribution == "RedHat"
 
-    #================================================
     # Install Container requirements
-    #================================================
-    # what is in container-tools. ALMA doesn't know about this or seem to need it.
-    - name: install container-tools for RHEL 9 
-      dnf: 
-        name: container-tools
-        state: latest 
-      when: 
-        - ansible_distribution == "RedHat"
-        - ansible_distribution_major_version == "9"
-
-    - name: install container-tools for RHEL 8 
-      register: container_tools_8
-      shell: dnf module install -y container-tools:rhel8 
-      when: 
-        - ansible_distribution == "RedHat"
-        - ansible_distribution_major_version == "8"
-
-    - debug:
-        var: container_tools_8
-          
-    - name: install podman-compose for RHEL 9
-      dnf: 
-        name: podman-compose
-        state: latest
+    - name: Run RHEL 9 Podman tasks
+      include_tasks: podman_rhel9_tasks.yml
       when:
         - ansible_distribution == "RedHat"
         - ansible_distribution_major_version == "9"
 
-    # RHEL 8 repos have too old a version of compose. netwk issues
-    # Seems like RHEL 8 has python installed by default so pip is available.
-    - name: install podman-compose for RHEL 8 with pip
-      pip:
-        name: podman-compose
+    - name: Run RHEL 8 Podman tasks
+      include_tasks: podman_rhel8_tasks.yml
       when:
         - ansible_distribution == "RedHat"
         - ansible_distribution_major_version == "8"
 
+    # Our actual application stuff
+    - name: Run SAFR installation tasks
+      include_tasks: safr_installation_tasks.yml
 
-#####################################
-# Do we have a GPU capable machine? if so use the gpu workload
-# otherwise we're cpu based
-#####################################
-    - name: Check GPU capabilities
-      shell: lspci 
-      register: gpu
-
-
-    - name: copy safr app directory structure
-      file:
-        path: '{{ item }}'
-        state: directory
-        owner: '{{ local_user }}'
-        group: '{{ local_user }}'
-        recurse: true
-      loop:
-        - '{{ app_dir }}/cpu'
-        - '{{ app_dir }}/gpu'
-        - '{{ app_dir }}/data'
-        - '{{ app_dir }}/certs'
-      tags:
-        - foo
-
-    - name: setup SAFR for cpu loads
-      include_tasks: fr_cpu_tasks.yml
-      when: want_gpu != true
-      tags:
-        - foo
-
-    - name: include gpu setup if an nvidia card is present
-      include_tasks: fr_gpu_tasks.yml
-      when: want_gpu and gpu.stdout.find("NVIDIA") != -1
-
-     # our premade volumes save us from running a lot of setuo code.
-     # packed some tarbs in an image. clever or stupid?
-     # might be better to keep the archive with the ansible repo
-     # it's only about 10-12 MB
-    - name: setup pre made data volumes as starting point
-      become: no
-      register: data_container
-      shell: podman run -d --rm --name dbdata docker.io/eyemetricfr/dbdata:v0.92
-
-    - debug:
-        var: data_container
-
-    - name: copy data volumes from data container to tmp dir
-      become: no
-      register: data_copy
-      shell: |
-        podman cp dbdata:/safr_pgdata.gz.tar /tmp
-        podman cp dbdata:/pvdb_pgdata.gz.tar /tmp
-
-    - debug:
-        var: data_copy
-
-    - name: Stop dbdata container
-      become: no
-      containers.podman.podman_container:
-        name: dbdata
-        state: stopped
-
-    - name: Extract data volume archives to volume location
-      unarchive:
-        src:  '{{ item }}'
-        dest: '{{ app_dir }}/data'
-        remote_src: yes
-        owner: '{{ local_user }}'
-        group: '{{ local_user }}'
-      loop:
-        - /tmp/safr_pgdata.gz.tar
-        - /tmp/pvdb_pgdata.gz.tar
-      tags:
-        - arch
-
-    ########################################################
-    # python requirements for generating openssl keys
-    ########################################################
-    - name: install python pip
-      dnf:
-        name: python3-pip
-        state: latest
-
-    - name: install pyOpenSSL
-      pip:
-        name: pyOpenSSL
-
-    ###############################################
-    # Create self signed cert  for safr-api service
-    ###############################################
-    - name: Create private key (RSA, 4096 bits)
-      become: no
-      community.crypto.openssl_privatekey:
-        path: '{{ cert_dir }}/safr-api.key'
-
-    - name: Create simple self-signed certificate
-      become: no
-      community.crypto.x509_certificate:
-        path: '{{ cert_dir}}/safr-api.pem'
-        privatekey_path: '{{ cert_dir }}/safr-api.key'
-        provider: selfsigned
-
-
-    ###############################################
-    #
-    ###############################################
-    - name: "Set unpriviledged port access to start at 443"
-      lineinfile:
-        path: /etc/sysctl.conf
-        insertafter: EOF
-        line: net.ipv4.ip_unprivileged_port_start=443
-
+    - name: Run OpenSsl tasks for https only
+      include_tasks: openssl_tasks.yml

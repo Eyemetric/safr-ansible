@@ -1,4 +1,5 @@
 ---
+#dev subscription. I have 16. Obviously not for production
 subscription_username: "brightblade42"
 subscription_password: "R2y1a1n@"
 appstream: rhel-{{ ansible_distribution_major_version }}-for-x86_64-appstream-rpms
@@ -8,14 +9,26 @@ docker_pwd: "19darkangel84"
 env: "dev"
 
 local_ip: '{{ ansible_host }}'
-local_user: '{{ ansible_user }}'
+
+#user we used to ssh into the remote machine. This should always be eyemetric if possible.
+eyemetric_user: 'eyemetric'
+eyemetric_group: "eyemetric"
+eyemetric_pwd: 'Eyemetr1c#'
+ssh_key_file: "/Users/ryan/.ssh/id_rsa.pub"
 #tpass_svc: "https://devsys01.tpassvms.com/tpassservice/"
 tpass_svc: "https://devsys01.tpassvms.com/TpassPVService/"
+
+################################################
+# safr DB vars
+################################################
 safr_db_user: "admin"
 safr_db_pwd: "admin"
 safr_db_name: "safr"
 safr_db_port: 5433
-# safr api env
+
+################################################
+# safr api env vars
+################################################
 safr_api_http_port: 443
 safr_api_https_port: 443
 vid_stream_addr: "{{ local_ip }}:5000"
@@ -23,7 +36,6 @@ detect_addr: "{{ local_ip }}:5050"
 alerts_addr: "{{ local_ip }}:5051"
 ident_api: "http://{{ local_ip }}:8080/v4/"
 proc_api: "http://{{ local_ip }}:8081/v6/"
-#fr_api: "http://{{ local_ip }}:{{ safr_api_http_port }}"
 fr_api: "https://{{ local_ip }}:{{ safr_api_https_port }}"
 tpass_user: "admin"
 tpass_pwd: "njbs1968"
@@ -31,7 +43,11 @@ safr_api_min_match: 0
 safr_api_match_expires: 10
 safr_api_min_quality: 0.8
 safr_api_min_dupe_match: 0.98
+
+
+################################################
 # safr-cams vars
+################################################
 safr_cams_http_port: 3031
 safr_cams_https_port: 3032
 safr_cams_min_match: 0.50
@@ -39,12 +55,18 @@ safr_cams_match_expires: 10
 safr_cams_min_quality: 0.8
 safr_cams_min_dupe_match: 0.98
 
+################################################
 # pv processor
+################################################
 pv_http_interface: "on"
 pv_inference_workers: 1
 pv_proc_port_1: 50051
 pv_proc_port_2: 8081
+
+
+################################################
 # pv identity
+################################################
 pv_pg_user: "admin"
 pv_pg_pwd: "admin"
 pv_db_name: "identity"
@@ -53,7 +75,9 @@ http_proxy: "on"
 pv_ident_port_1: 5656
 pv_ident_port_2: 8080
 
+################################################
 # streaming
+################################################
 PV_INFERENCE_WORKERS: 1
 PV_POSTPROCESSOR_WORKERS: 1
 PV_OUTPUT_FACES_ONLY: True
@@ -61,14 +85,19 @@ PV_FACE_QUALITY_TRACKING: 0.50
 #NVIDIA_VISIBLE_DEVICES=all
 #NVIDIA_DRIVER_CAPABILITIES=all
 
-
 tz: "America/New_York"
 app_ver: "v0.92"
-# used to be /home/eyemetric
+pg_ver: "14.1"
 app_dir: "/opt/eyemetric/fr"
 cert_dir: '{{app_dir}}/certs'
 
+################################################
+# List of OCI images representing our application
+################################################
+
 safr_images:
-    safr_api: docker.io/eyemetricfr/safr:v0.92-tls
-    safr_cams: docker.io/eyemetricfr/safr-cams:v0.92
-    safrdb: docker.io/postgres:14.1
+    safr_api: 'docker.io/eyemetricfr/safr:{{ app_ver}}-tls'
+    safr_cams: 'docker.io/eyemetricfr/safr-cams:{{ app_ver }}'
+    safrdb: 'docker.io/postgres:{{ pg_ver }}'
+
+dbdata_image: 'docker.io/eyemetricfr/dbdata:{{ app_ver }}'
