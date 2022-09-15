@@ -1,4 +1,5 @@
 want_gpu: false
+want_gpu: false
 app_type: "cpu"
 
 pv_images:
