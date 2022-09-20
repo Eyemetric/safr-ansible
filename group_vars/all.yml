@@ -8,6 +8,8 @@ rhel_ver: "{{ ansible_distribution_major_version }}"
 docker_user: "eyemetricfr"
 docker_pwd: "19darkangel84"
 env: "dev"
+#this should mirror our new semver 
+app_ver: "v0.92"
 
 local_ip: '{{ ansible_host }}'
 
@@ -20,6 +22,13 @@ ssh_key_file: "/Users/ryan/.ssh/id_rsa.pub"
 tpass_svc: "https://devsys01.tpassvms.com/TpassPVService/"
 tpass_user: "admin"
 tpass_pwd: "njbs1968"
+
+tz: "America/New_York"
+pg_ver: "14.1"
+app_dir: "/opt/eyemetric/fr"
+cert_dir: '{{app_dir}}/certs'
+# don't overwrite any existing volumes.
+overwrite_data_volumes: false
 ################################################
 # safr DB vars
 ################################################
@@ -85,13 +94,6 @@ PV_FACE_QUALITY_TRACKING: 0.50
 #NVIDIA_VISIBLE_DEVICES=all
 #NVIDIA_DRIVER_CAPABILITIES=all
 
-tz: "America/New_York"
-app_ver: "v0.92"
-pg_ver: "14.1"
-app_dir: "/opt/eyemetric/fr"
-cert_dir: '{{app_dir}}/certs'
-# don't overwrite any existing volumes.
-overwrite_data_volumes: false
 
 ################################################
 # List of OCI images representing our application
