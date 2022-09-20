@@ -45,35 +45,37 @@ services:
           #  - /etc/localtime:/etc/localtime:ro
             - {{ app_dir }}/certs:/cert
 
-    safr-cams:
-        image: {{ safr_images.safr_cams }}
-        container_name: safr-cams
-        restart: always
-        ports:
-           - "{{ safr_cams_http_port }}:80"
-           - "{{ safr_cams_https_port }}:443"
-        environment:
-            - SAFR_DB_ADDR={{ local_ip }}
-            - SAFR_DB_PORT={{ safr_db_port }}
-            - VID_STREAM_ADDR={{ vid_stream_addr }}
-            - DETECT_ADDR={{ detect_addr }}
-            - ALERTS_ADDR={{ alerts_addr}}
-            - FR_API={{ fr_api }}
-            - MIN_MATCH={{ safr_cams_min_match }}
-            - MATCH_EXPIRES={{ safr_cams_match_expires }}
-            - MIN_QUALITY={{ safr_cams_min_quality }}
-            - MIN_DUPE_MATCH={{ safr_cams_min_dupe_match }}
-            - CONSOLE_LOOKUP=false
-            - ASPNETCORE_URLS=http://+80
-              #- ASPNETCORE_URLS=https://+443;http://+80
-              #- ASPNETCORE_HTTPS_PORT=443
-              #- ASPNETCORE_Kestrel__Certificates__Default__Password=eyemetric
-              #- ASPNETCORE_Kestrel__Certificates__Default__Path=/https/EyemetricFR.Server.pfx
-            - TZ="America/New_York"
-        volumes:
-            - {{ app_dir }}/certs:/https
-              #- /etc/timezone:/etc/timezone:ro
-              #- /etc/localtime:/etc/localtime:ro
+ #   safr-cams:
+ #     image: {{ safr_images.safr_cams }}
+ #     container_name: safr-cams
+ #     restart: always
+ #     ports:
+ #        - "{{ safr_cams_http_port }}:80"
+ #        - "{{ safr_cams_https_port }}:443"
+ #     environment:
+ #         - SAFR_DB_ADDR={{ local_ip }}
+ #         - SAFR_DB_PORT={{ safr_db_port }}
+ #         - VID_STREAM_ADDR={{ vid_stream_addr }}
+ #         - DETECT_ADDR={{ detect_addr }}
+ #         - ALERTS_ADDR={{ alerts_addr}}
+ #         - FR_API={{ fr_api }}
+ #         - MIN_MATCH={{ safr_cams_min_match }}
+ #         - MATCH_EXPIRES={{ safr_cams_match_expires }}
+ #         - MIN_QUALITY={{ safr_cams_min_quality }}
+ #         - MIN_DUPE_MATCH={{ safr_cams_min_dupe_match }}
+ #         - CONSOLE_LOOKUP=false
+ #         - ASPNETCORE_URLS=http://+80
+ #           #- ASPNETCORE_URLS=https://+443;http://+80
+ #           #- ASPNETCORE_HTTPS_PORT=443
+ #           #- ASPNETCORE_Kestrel__Certificates__Default__Password=eyemetric
+ #           #- ASPNETCORE_Kestrel__Certificates__Default__Path=/https/EyemetricFR.Server.pfx
+ #         - TZ="America/New_York"
+ #     volumes:
+ #         - {{ app_dir }}/certs:/https
+ #           #- /etc/timezone:/etc/timezone:ro
+ #           #- /etc/localtime:/etc/localtime:ro
+ #  safr-cams:
+ #      image: {{ safr_images.safr_cams }}
 
     proc:
         image: {{ pv_images.processor }}
@@ -115,30 +117,27 @@ services:
         volumes:
           - {{ app_dir }}/data/pvdb_pgdata/_data:/var/lib/postgresql/data:Z
 
-    pvstrm:
-        image: {{ pv_images.streaming }}
-        container_name: streaming-v6
-        environment:
-            - TZ="{{ tz }}"
-            - PV_INFERENCE_WORKERS={{ PV_INFERENCE_WORKERS }}
-            - PV_POSTPROCESSOR_WORKERS={{ PV_POSTPROCESSOR_WORKERS }}
-            - PV_OUTPUT_FACES_ONLY={{ PV_OUTPUT_FACES_ONLY }}
-            - PV_FACE_QUALITY_TRACKING={{ PV_FACE_QUALITY_TRACKING }}
-        network_mode: bridge
-        restart: always
-        ports:
-            - "5000:5000"
-            - "5050:5050"
-            - "5051:5051"
-        volumes:
-            - type: tmpfs
-              target: /dev/shm
-              tmpfs:
-                  size: 3g #000000000 # ~6gb
+ #  pvstrm:
+ #       image: {{ pv_images.streaming }}
+ #        container_name: streaming-v6
+ #        environment:
+ #            - TZ="{{ tz }}"
+ #            - PV_INFERENCE_WORKERS={{ PV_INFERENCE_WORKERS }}
+ #            - PV_POSTPROCESSOR_WORKERS={{ PV_POSTPROCESSOR_WORKERS }}
+ #            - PV_OUTPUT_FACES_ONLY={{ PV_OUTPUT_FACES_ONLY }}
+ #            - PV_FACE_QUALITY_TRACKING={{ PV_FACE_QUALITY_TRACKING }}
+ #        network_mode: bridge
+ #        restart: always
+ #        ports:
+ #            - "5000:5000"
+ #            - "5050:5050"
+ #            - "5051:5051"
+ #        volumes:
+ #            - type: tmpfs
+ #              target: /dev/shm
+ #              tmpfs:
+ #                  size: 3g #000000000 # ~6gb
 
-        depends_on:
-            - pvdb
+ #        depends_on:
+ #            - pvdb
         
-volumes:
-    pv-data:
-    safr-db:

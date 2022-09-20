@@ -21,8 +21,6 @@
     name: '{{ item.value }}'
   loop: '{{ pv_images | dict2items }}'
 
-- debug: 
-    var: docker_pull
 
 - name: pull SAFR containers from docker.io (same cpu or gpu)
   become: no
@@ -46,5 +44,4 @@
     dest: '{{ app_dir }}/cpu/docker-compose.yml'
     owner: '{{ eyemetric_user }}'
     group: '{{ eyemetric_user }}'
-  tags:
-    - foo
+

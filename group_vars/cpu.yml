@@ -1,5 +1,4 @@
 want_gpu: false
-want_gpu: false
 app_type: "cpu"
 
 pv_images:
@@ -8,3 +7,7 @@ pv_images:
     identity: docker.io/paravision/identity:v4.0.0
     streaming: docker.io/paravision/streaming:v6-openvino
 
+safr_images:
+    safr_api: 'docker.io/eyemetricfr/safr:{{ app_ver}}-tls'
+    safrdb: 'docker.io/postgres:{{ pg_ver }}'
+    safr_cams: 'docker.io/eyemetricfr/safr-cams:{{ app_ver }}'
