@@ -9,8 +9,8 @@ docker_user: "eyemetricfr"
 docker_pwd: "19darkangel84"
 env: "dev"
 #this should mirror our new semver 
-app_ver: "v0.92"
-
+#app_ver: "v0.92"
+app_ver: "1.0.0"
 local_ip: '{{ ansible_host }}'
 
 #user we used to ssh into the remote machine. This should always be eyemetric if possible.
