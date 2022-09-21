@@ -8,6 +8,6 @@ pv_images:
     streaming: docker.io/paravision/streaming:v6-openvino
 
 safr_images:
-    safr_api: 'docker.io/eyemetricfr/safr:{{ app_ver}}-tls'
+    safr_api: 'docker.io/eyemetricfr/safr:{{ app_ver}}'
     safrdb: 'docker.io/postgres:{{ pg_ver }}'
     safr_cams: 'docker.io/eyemetricfr/safr-cams:{{ app_ver }}'

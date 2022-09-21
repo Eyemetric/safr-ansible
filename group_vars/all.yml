@@ -100,7 +100,7 @@ PV_FACE_QUALITY_TRACKING: 0.50
 ################################################
 
 safr_images:
-    safr_api: 'docker.io/eyemetricfr/safr:{{ app_ver}}-tls'
+    safr_api: 'docker.io/eyemetricfr/safr:{{ app_ver}}'
     safr_cams: 'docker.io/eyemetricfr/safr-cams:{{ app_ver }}'
     safrdb: 'docker.io/postgres:{{ pg_ver }}'
 
