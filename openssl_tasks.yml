@@ -18,6 +18,8 @@
   become: no
   community.crypto.openssl_privatekey:
     path: '{{ cert_dir }}/safr-api.key'
+  tags:
+    - cert
 
 - name: Create simple self-signed certificate
   become: no
@@ -25,6 +27,8 @@
     path: '{{ cert_dir}}/safr-api.pem'
     privatekey_path: '{{ cert_dir }}/safr-api.key'
     provider: selfsigned
+  tags:
+    - cert
 
 
 ###############################################
@@ -35,4 +39,5 @@
     path: /etc/sysctl.conf
     insertafter: EOF
     line: net.ipv4.ip_unprivileged_port_start=443
-
+  tags:
+    - cert

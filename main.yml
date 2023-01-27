@@ -8,7 +8,7 @@
     - name: Enable required RHEL 8 | 9 Repositories
       include_tasks: enable_rhel_repo_tasks.yml
       when: ansible_distribution == "RedHat"
-
+    
     - name: dnf update RHEL
       register: dnf_update
       ansible.builtin.dnf:

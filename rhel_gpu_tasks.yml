@@ -88,50 +88,6 @@
 #end of selinux voodoo 
 #should we run nvidia-smi?
 
-###########################################################
-# Podman image setup
-###########################################################
-- name: use podman login so we ca pull our images
-  become: no
-  register: dock_login
-  containers.podman.podman_login:
-    username: '{{ docker_user }}'
-    password: '{{ docker_pwd }}'
-    registry: docker.io
+- name: pull and setup OCI images
+  include_tasks: oci_install.yml
 
-- name: pull gpu based paravision containers
-  become: no
-  register: docker_pull
-  containers.podman.podman_image:
-    name: '{{ item.value }}'
-  loop: '{{ pv_images | dict2items }}'
-
-- debug:
-    var: docker_pull
-
-- name: pull SAFR containers from docker.io (same cpu or gpu)
-  become: no
-  register: docker_pull
-  containers.podman.podman_image:
-    name: '{{ item.value }}'
-  loop: '{{ safr_images | dict2items }}'
-
- # we're not currently using the var.env the config generates everything in the compose file
- # not the best way to do it bu
-- name: copy config template files to app directories
-  template:
-    src: var.env.j2
-    dest: '{{ app_dir }}/gpu/var.env'
-    owner: '{{ eyemetric_user }}'
-    group: '{{ eyemetric_user }}'
-  tags:
-    - foo
-    -
-- name: copy docker-compose template
-  template:
-    src: docker-compose.gpu.j2
-    dest: '{{ app_dir }}/gpu/docker-compose.yml'
-    owner: '{{ eyemetric_user }}'
-    group: '{{ eyemetric_user }}'
-  tags:
-    - foo

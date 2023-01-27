@@ -40,9 +40,11 @@
     register: gpu
 
   - name: include gpu setup if an nvidia card is present
-    include_tasks: fr_gpu_tasks.yml
-    when: gpu.stdout.find("NVIDIA") != -1
-  when: want_gpu
+    include_tasks: rhel_gpu_tasks.yml
+    when:
+      - gpu.stdout.find("NVIDIA") != -1
+      - ansible_distribution == "RedHat"
+
 
 
 - name: check for existing pv data volume (existing installation)

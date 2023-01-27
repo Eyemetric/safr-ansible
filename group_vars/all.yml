@@ -16,10 +16,12 @@ local_ip: '{{ ansible_host }}'
 #user we used to ssh into the remote machine. This should always be eyemetric if possible.
 eyemetric_user: 'eyemetric'
 eyemetric_group: "eyemetric"
-eyemetric_pwd: 'Eyemetr1c#'
+#eyemetric_pwd: 'Eyemetr1c#'
+eyemetric_pwd: 'Eyemetr1c#1'
 ssh_key_file: "/Users/ryan/.ssh/id_rsa.pub"
 #tpass_svc: "https://devsys01.tpassvms.com/tpassservice/"
-tpass_svc: "https://devsys01.tpassvms.com/TpassPVService/"
+#tpass_svc: "https://devsys01.tpassvms.com/TpassPVService/"
+tpass_svc: "https://192.168.3.50/tpassservice/"
 tpass_user: "admin"
 tpass_pwd: "njbs1968"
 
@@ -105,3 +107,10 @@ safr_images:
     safrdb: 'docker.io/postgres:{{ pg_ver }}'
 
 dbdata_image: 'docker.io/eyemetricfr/dbdata:{{ app_ver }}'
+
+safr_images2:
+    safr_api: 'eyemetricfr/safr:{{ app_ver}}'
+    safr_cams: 'eyemetricfr/safr-cams:{{ app_ver }}'
+    safrdb: 'postgres:{{ pg_ver }}'
+
+dbdata_image2: 'eyemetricfr/dbdata:{{ app_ver }}'
