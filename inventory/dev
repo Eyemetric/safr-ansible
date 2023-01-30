@@ -1,0 +1,10 @@
+[home]
+192.168.0.204
+
+[njbs]
+173.220.177.74
+#stealth machine
+173.220.177.77
+
+[gpu:children]
+home
