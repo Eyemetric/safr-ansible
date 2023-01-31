@@ -46,4 +46,3 @@
     dest: '{{ app_dir }}/cpu/docker-compose.yml'
     owner: '{{ eyemetric_user }}'
     group: '{{ eyemetric_user }}'
-
