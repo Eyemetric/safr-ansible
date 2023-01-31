@@ -1,27 +1,23 @@
 ---
 - name: Enable required RHEL 8 | 9 Repositories
   include_tasks: enable_rhel_repo_tasks.yml
-  when: ansible_distribution == "RedHat"
 
 - name: dnf update RHEL
   register: dnf_update
   ansible.builtin.dnf:
     name: "*"
     state: latest
-  when: ansible_distribution == "RedHat"
 
 
 # Install Container requirements
 - name: Run RHEL 9 Podman tasks
   include_tasks: podman_rhel9_tasks.yml
   when:
-    - ansible_distribution == "RedHat"
     - ansible_distribution_major_version == "9"
 
 - name: Run RHEL 8 Podman tasks
   include_tasks: podman_rhel8_tasks.yml
   when:
-    - ansible_distribution == "RedHat"
     - ansible_distribution_major_version == "8"
 
 # Our actual application stuff
