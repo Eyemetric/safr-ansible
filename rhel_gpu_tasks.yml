@@ -20,18 +20,18 @@
     line: enabled=1
   when: cuda_repo.changed == True
 
-- name: install latest nvidia driver
-  register: nvidia_install
-  shell: dnf module install -y nvidia-driver:latest
+#- name: install latest nvidia driver
+#  register: nvidia_install
+#  shell: dnf module install -y nvidia-driver:latest
 
-- debug:
-    var: nvidia_install
-
+#- debug:
+#    var: nvidia_install
+# curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.repo | tee /etc/yum.repos.d/nvidia-container-toolkit.repo
 - name: install nvidia-container-toolkit repo 
   register: nvidia_toolkit_repo
   shell: | 
     distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-    curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.repo | tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+    curl -s -L https://nvidia.github.io/libnvidia-container/9.0/libnvidia-container.repo | tee /etc/yum.repos.d/nvidia-container-toolkit.repo
   args:
     creates: /etc/yum.repos.d/nvidia-container-toolkit.repo
 - debug:
