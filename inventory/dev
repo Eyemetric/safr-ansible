@@ -3,8 +3,11 @@
 
 [njbs]
 173.220.177.74
-#stealth machine
 173.220.177.77
+
+[gpu]
+njbs
+home
 
 [gpu:children]
 home
