@@ -1,0 +1,29 @@
+---
+# shh super secret
+---
+
+- name: use docker login so we ca pull our images
+  #become: no
+  register: dock_login
+  docker_login:
+    username: '{{ docker_login }}'
+    password: '{{ docker_pwd }}'
+    registry: '{{ docker_registry }}'
+
+- name: pull GPU based paravision images
+  register: docker_pull
+  docker_image:
+    source: pull
+    state: present
+    name: '{{ item.value }}'
+  loop: '{{ gpu_images | dict2items }}'
+  when: gpu
+
+- name: pull CPU based paravision images
+  register: docker_pull
+  docker_image:
+    source: pull
+    state: present
+    name: '{{ item.value }}'
+  loop: '{{ cpu_images | dict2items }}'
+  when: cpu

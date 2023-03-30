@@ -1,0 +1,6 @@
+---
+# handlers file for cuda-nvidia
+
+handlers:
+  - name: Install NVIDIA driver
+    command: "akmods --force && modprobe nvidia"

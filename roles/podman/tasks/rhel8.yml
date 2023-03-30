@@ -1,0 +1,29 @@
+---
+# podman on rhel 8
+---
+
+#i think this may have been weird
+- name: uninstall python36, install 39 for RHEL8
+  register: py36_state
+  ansible.builtin.dnf:
+    name: "python36"
+    state: absent
+
+- name: install python39
+  register: py39_state
+  ansible.builtin.dnf:
+    name: "python39"
+    state: latest
+
+- name: install container-tools for RHEL 8
+  register: container_tools_8
+  shell: dnf module install -y container-tools:rhel8
+
+- debug:
+    var: container_tools_8
+
+# RHEL 8 repos have too old a version of compose. netwk issues
+# Seems like RHEL 8 has python installed by default so pip is available.
+- name: install podman-compose for RHEL 8 with pip
+  pip:
+    name: podman-compose

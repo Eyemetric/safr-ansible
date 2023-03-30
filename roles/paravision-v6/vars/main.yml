@@ -1,0 +1,17 @@
+---
+# vars file for paravision-v6
+docker_login: "eyemetric_eyemetricfr"
+docker_pwd: "R2y1a1n@"
+docker_registry: "containers.paravision.ai"
+
+gpu_images:
+    pvdb: docker.io/paravision/postgres:12.0
+    processor: docker.io/paravision/processor:v6-gen5-balanced-tensorrt
+    identity: docker.io/paravision/identity:v4.0.0
+    streaming: docker.io/paravision/streaming:v6.0.0-tensorrt
+
+cpu_images:
+    pvdb: docker.io/paravision/postgres:12.0
+    processor: docker.io/paravision/processor:v6-gen5-balanced-openvino
+    identity: docker.io/paravision/identity:v4.0.0
+    streaming: docker.io/paravision/streaming:v6-openvino

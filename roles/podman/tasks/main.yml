@@ -1,0 +1,4 @@
+---
+# tasks file for podman
+- name: Include tasks for podman installation
+  include_tasks: "{{ ansible_distribution }}{{ ansible_distribution_version | replace('.', '') }}.yml"

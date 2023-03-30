@@ -1,0 +1,8 @@
+---
+# Ubooontu 22.04
+---
+# - name: Blacklist nouveau driver on Ubuntu
+#   ansible.builtin.lineinfile:
+#     path: /etc/modprobe.d/blacklist-nouveau.conf
+#     line: "blacklist nouveau"
+#     create: yes

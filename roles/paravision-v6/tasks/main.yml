@@ -1,0 +1,17 @@
+---
+# tasks file for paravision-v6
+
+---
+
+- name: copy docker-compose template
+  template:
+    src: docker-compose.gpu.j2
+    dest: '{{ app_dir }}/gpu/docker-compose.yml'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_user }}'
+  tags:
+    - foo
+
+# load tasks for the correct OS and version
+- name: Include tasks for paravision installation RHEL or UBUNTU
+  include_tasks: "{{ ansible_distribution }}.yml"
