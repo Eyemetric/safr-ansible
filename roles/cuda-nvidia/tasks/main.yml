@@ -3,4 +3,4 @@
 ---
 - name: Include tasks for NVIDIA installation
   include_tasks: "{{ ansible_distribution }}{{ ansible_distribution_version | replace('.', '') }}.yml"
-  when: "'gpu' in group_names"
+  when: gpu

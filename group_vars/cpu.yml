@@ -1,13 +1,2 @@
-want_gpu: false
+gpu: false
 app_type: "cpu"
-
-pv_images:
-    pvdb: docker.io/paravision/postgres:12.0
-    processor: docker.io/paravision/processor:v6-gen5-balanced-openvino
-    identity: docker.io/paravision/identity:v4.0.0
-    streaming: docker.io/paravision/streaming:v6-openvino
-
-safr_images:
-    safr_api: 'docker.io/eyemetricfr/safr:{{ app_ver}}'
-    safrdb: 'docker.io/postgres:{{ pg_ver }}'
-    safr_cams: 'docker.io/eyemetricfr/safr-cams:{{ app_ver }}'

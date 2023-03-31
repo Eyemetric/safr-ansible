@@ -1,14 +1,21 @@
 ---
 # shh super secret
 ---
-
-- name: use docker login so we ca pull our images
+- name: use docker login so we ca pull paravision legacy from eyemetric
   #become: no
   register: dock_login
   docker_login:
     username: '{{ docker_login }}'
     password: '{{ docker_pwd }}'
     registry: '{{ docker_registry }}'
+
+- name: use paravisions custom registry to pull pv images
+  #become: no
+  register: pv_login
+  docker_login:
+    username: '{{ pv_login }}'
+    password: '{{ pv_pwd }}'
+    registry: '{{ pv_registry }}'
 
 - name: pull GPU based paravision images
   register: docker_pull
@@ -27,3 +34,4 @@
     name: '{{ item.value }}'
   loop: '{{ cpu_images | dict2items }}'
   when: cpu
+

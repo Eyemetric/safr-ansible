@@ -1,13 +1,14 @@
 ---
+fr_engine: 'pv' #default, could be pv or cv
 #dev subscription. I have 16. Obviously not for production
 subscription_username: "brightblade42"
 subscription_password: "R2y1a1n@"
-appstream: rhel-{{ ansible_distribution_major_version }}-for-x86_64-appstream-rpms
-rhel_ver: "{{ ansible_distribution_major_version }}"
 #credentials required to pull our images
-docker_user: "eyemetricfr"
+docker_login: "eyemetricfr"
 docker_pwd: "19darkangel84"
+docker_registry: "docker.io"
 env: "dev"
+
 #this should mirror our new semver 
 #app_ver: "v0.92"
 app_ver: "1.0.0"

@@ -1,0 +1,50 @@
+---
+# tasks file for safr-v1_5
+
+
+- name: podman role for rhel
+  include_role:
+    name: podman
+  when: ansible_distribution == "RedHat"
+
+- name: docker role for rhel
+  include_role:
+    name: docker
+  when: ansible_distribution == "Ubuntu"
+
+
+- name: create safr app directory structure
+  file:
+    path: '{{ item }}'
+    state: directory
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_user }}'
+    recurse: true
+  loop:
+    - '{{ app_dir }}/cpu'
+    - '{{ app_dir }}/gpu'
+    - '{{ app_dir }}/data'
+    - '{{ app_dir }}/certs'
+    - '{{ app_dir }}/scripts'
+    - '{{ app_dir }}/utils'
+
+
+- name: copy safr scripts
+  copy:
+    src: scripts
+    dest: '{{ app_dir }}/scripts'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0774'
+
+
+
+- name: Include paravision role
+  include_role:
+    name: paravision-v6
+  when:  fr_engine  == 'pv'
+
+- name: Include fr_engine role
+  include_role:
+    name: clearview-v1_5
+  when: fr_engine == 'cv'

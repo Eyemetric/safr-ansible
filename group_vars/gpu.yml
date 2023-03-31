@@ -1,13 +1,2 @@
-want_gpu: true
+gpu: true
 app_type: "gpu"
-pv_images:
-    pvdb: docker.io/paravision/postgres:12.0
-    processor: docker.io/paravision/processor:v6-gen5-balanced-tensorrt
-    identity: docker.io/paravision/identity:v4.0.0
-    streaming: docker.io/paravision/streaming:v6.0.0-tensorrt
-
-pv_images2:
-    pvdb: paravision/postgres:12.0
-    processor: paravision/processor:v6-gen5-balanced-tensorrt
-    identity: paravision/identity:v4.0.0
-    streaming: paravision/streaming:v6.0.0-tensorrt

@@ -3,13 +3,11 @@
   hosts: all
   remote_user: "{{ eyemetric_user }}"
   become: yes
-  tasks:
-    - name: RHEL based install
-      include_tasks: rhel_tasks.yml
-      when:
-        - ansible_distribution == "RedHat"
 
-    - name: Ubuntu based install
-      include_tasks: ubuntu_tasks.yml
-      when:
-        - ansible_distribution == "Ubuntu"
+  pre_tasks:
+    - name: Enable RHEL 8 | 9  repos
+      include_tasks: enable_rhel_repo_tasks.yml
+      when: ansible_distribution == "RedHat"
+
+  roles:
+    - role: safr-v1_5
