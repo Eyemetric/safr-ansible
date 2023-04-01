@@ -1,0 +1,111 @@
+---
+# nvidia tasks for rhel 9
+---
+
+- name: install the nvidia cuda repo
+  register: cuda_repo
+  shell: dnf config-manager --add-repo=https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
+  args:
+    creates: /etc/yum.repos.d/cuda-rhel9.repo
+
+- debug:
+    var: cuda_repo
+
+- name: enable cuda repository
+  register: cuda_enabled
+  lineinfile:
+    path: /etc/yum.repos.d/cuda-rhel9.repo
+    create: false
+    regexp: enabled=
+    line: enabled=1
+  when: cuda_repo.changed == True
+
+# alternate driver install method.
+# name: Install NVIDIA drivers on RHEL 9
+#   dnf:
+#     name: akmod-nvidia
+#     state: latest
+#   notify:
+#     - Install NVIDIA driver
+
+- name: Add Nouveau blacklist entry
+  lineinfile:
+    path: /etc/modprobe.d/nouveau.conf
+    line: "{{ item }}"
+  with_items:
+    - "blacklist nouveau"
+    - "options nouveau modeset=0"
+  state: present
+  create: yes
+  insertafter: EOF
+
+- name: install latest nvidia driver
+  register: nvidia_install
+  shell: dnf module install -y nvidia-driver:latest
+
+- debug:
+    var: nvidia_install
+
+- name: install nvidia-container-toolkit repo
+  register: nvidia_toolkit_repo
+  shell: |
+    distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+    curl -s -L https://nvidia.github.io/libnvidia-container/9.0/libnvidia-container.repo | tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+  args:
+    creates: /etc/yum.repos.d/nvidia-container-toolkit.repo
+- debug:
+    var: nvidia_toolkit_repo
+
+- name: install nvidia-container-toolkit package
+  dnf:
+    name: nvidia-container-toolkit
+    state: latest
+  when: nvidia_toolkit_repo.changed == true
+
+
+#############################
+# nvidia selinux voodoo
+#############################
+
+- name: modify container-runtime-config
+  shell: sudo sed -i 's/^#no-cgroups = false/no-cgroups = true/;' /etc/nvidia-container-runtime/config.toml
+  when: nvidia_toolkit_repo.changed == true
+# nvidia policy shows RHEL7. we are using 8 or 9. 7 was the only policy file avail
+# so assuming that's ok.
+- name: get nvidia SELinux policy module file
+  register: nvidia_policy
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/NVIDIA/dgx-selinux/master/bin/RHEL7/nvidia-container.pp
+    dest: /tmp/nvidia-container.pp
+
+- debug:
+    var: nvidia_policy
+
+- name: add nvidia SELinux policy module
+  register: semodule_install
+  command: semodule -i /tmp/nvidia-container.pp
+  when: nvidia_policy.changed == True
+
+- debug:
+    var: semodule_install
+
+- name: remove tmp nvidia policy file
+  file: path=/tmp/nvidia-container.pp
+        state=absent
+
+#this is currently voodoo to me
+- name: check and restore selinux labels
+  register: selabels
+  shell: nvidia-container-cli -k list | restorecon -v -f -
+
+- debug:
+    var: selabels
+
+- name: restorecon all accessed devices
+  register: restcon_dev
+  command: restorecon -Rv /dev
+
+- debug:
+    var: restcon_dev
+#end of selinux voodoo
+#should we run nvidia-smi?

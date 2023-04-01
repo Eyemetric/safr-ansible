@@ -1,0 +1,98 @@
+---
+
+# ------------------------
+# Create eyemetric user and group if needed
+# ------------------------
+- name: Create FR accounts
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: create users
+      include_tasks: create_user_tasks.yml
+
+# ------------------------
+# GPU prequisite install play
+# ------------------------
+- name: Setup NVIDIA for GPU enabled servers
+  hosts: gpu
+  remote_user: "{{ eyemetric_user }}"
+  become: yes
+
+  tasks:
+    - name: Print a message
+      debug:
+        msg: "This would install all the CUDA and nvidia drivers"
+
+
+#------------------------
+# OCI PLAY
+#----------------------------
+- name: podman role for rhel
+  hosts: all
+  remote_user: "{{ eyemetric_user }}"
+  roles:
+    - role: podman
+  when: ansible_distribution == "RedHat"
+
+- name: docker role for rhel
+  hosts: all
+  remote_user: "{{ eyemetric_user }}"
+  roles:
+    - role: docker
+  when: ansible_distribution == "Ubuntu"
+
+
+# ------------------------
+# SAFR 1.5 PLAY
+# ------------------------
+- name: Install SAFR v1.5 services and dependencies.
+  hosts: all
+  remote_user: "{{ eyemetric_user }}"
+  become: yes
+
+  pre_tasks:
+    - name: Enable RHEL 8 | 9  repos
+      include_tasks: enable_rhel_repo_tasks.yml
+      when: ansible_distribution == "RedHat"
+
+  roles:
+    - role: safr-v1_5
+
+  post_tasks:
+    - name: Print a message
+      debug:
+        msg: "Running post tasks for Safr Play"
+
+# ------------------------
+# FR ENGINE PLAYS
+# ------------------------
+
+- name: Install Paravision (v6) services
+  hosts: paravision
+  remote_user: "{{ eyemetric_user }}"
+  become: yes
+
+  roles:
+    - role: paravision-v6
+
+
+- name: Install Clearview (1.5) services
+  hosts: clearview
+  remote_user: "{{ eyemetric_user }}"
+  become: yes
+
+  roles:
+    - role: clearview-v1_5
+
+# ------------------------
+# DATA PLAY
+# ------------------------
+- name: Install initial data volumes for new installs
+  hosts: all
+  remote_user: "{{ eyemetric_user }}"
+  become: yes
+
+  tasks:
+    - name: Run the data tasks
+      include_tasks: dbtasks.yml

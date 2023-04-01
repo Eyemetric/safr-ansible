@@ -1,0 +1,84 @@
+#version: "3.9"
+services:
+    frdb:
+        image: {{safr_images.frdb}}
+        restart: always
+        environment:
+            - POSTGRES_USER={{fr_db_user}}
+            - POSTGRES_PASSWORD={{fr_db_pwd}}
+            - POSTGRES_DB={{fr_db_name}}
+            - TZ={{time_zone}}
+        ports:
+            - "{{fr_db_port}}:5432"
+        volumes:
+          - /opt/eyemetric/fr/data/safr_pgdata/_data:/var/lib/postgresql/data:Z
+              #- /etc/timezone:/etc/timezone:ro
+              #- /etc/localtime:/etc/localtime:ro
+        networks:
+          - frnetwork
+    fr-api:
+        image: {{safr_images.fr_api}}
+        restart: always
+        ports:
+            - "{{ fr_api_http_port }}:3033"
+            - "{{ fr_api_https_port }}:443"
+        environment:
+            - SAFR_DB_ADDR={{host_ip}}
+            - SAFR_DB_PORT={{fr_db_port}}
+            - FR_BACKEND={{fr_backend}}  # pv | cv  paravision or clearview
+            - CV_URL={{cv_url}}
+            - PV_IDENT_URL={{ident_url}}
+            - PV_PROC_URL={{proc_url}}
+            - MIN_MATCH={{min_match}}
+            - MATCH_EXPIRES={{match_expires}}
+            - MIN_QUALITY={{min_quality}}
+            - MIN_DUPE_MATCH={{min_dupe_match}}
+            - TPASS_USER={{tpass_user}}
+            - TPASS_PWD={{tpass_pwd}}
+            - TPASS_ADDR={{tpass_url}}
+            - RUST_LOG={{log_level}}
+            - USE_TLS={{use_tls}}
+            - TZ={{time_zone}}
+        volumes:
+          #- /etc/timezone:/etc/timezone:ro
+          #  - /etc/localtime:/etc/localtime:ro
+            - /opt/eyemetric/fr/certs:/cert
+
+        networks:
+          - frnetwork
+
+    fr-cams:
+        image: {{safr_images.fr_cams}}
+        restart: always
+        ports:
+           - "{{fr_cams_http_port}}:80"
+           - "{{fr_cams_https_port}}:443"
+        environment:
+            - SAFR_DB_ADDR={{host_ip}}
+            - SAFR_DB_PORT={{fr_db_port}}
+            - VID_STREAM_ADDR={{vid_stream_addr}}
+            - DETECT_ADDR={{detect_addr}}
+            - ALERTS_ADDR={{alerts_addr}}
+            - FR_API={{fr_api}}
+            - MIN_MATCH={{cams_min_match}}
+            - MATCH_EXPIRES={{cams_match_expires}}
+            - MIN_QUALITY={{cam_min_quality}}
+            - MIN_DUPE_MATCH={{cams_min_dupe_match}}
+            - CONSOLE_LOOKUP={{cams_console_lookup}}
+            - ASPNETCORE_URLS=http://+80
+              #- ASPNETCORE_URLS=https://+443;http://+80
+              #- ASPNETCORE_HTTPS_PORT=443
+              #- ASPNETCORE_Kestrel__Certificates__Default__Password=eyemetric
+              #- ASPNETCORE_Kestrel__Certificates__Default__Path=/https/EyemetricFR.Server.pfx
+            - TZ={{time_zone}}
+        volumes:
+            - /opt/eyemetric/fr/certs:/https
+              #- /etc/timezone:/etc/timezone:ro
+              #- /etc/localtime:/etc/localtime:ro
+
+        networks:
+          - frnetwork
+
+networks:
+  frnetwork:
+    driver: bridge

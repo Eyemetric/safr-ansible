@@ -1,0 +1,15 @@
+---
+########################################
+# standalone playbook to get the correct user created
+# There may be a better way to handle this in the same playbook
+# but ssh'ing in as one user and setting up certain tasks that will
+# handle things owned or run by a different user is causing problems.
+# Pehaps the ansible Gods will look down with kindness and cast a light.
+########################################
+- name: Create the non-root user responsible for running our fr service containers
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: create users for eymetric safr
+      include: create_user_tasks.yml

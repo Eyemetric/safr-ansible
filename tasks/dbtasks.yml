@@ -1,0 +1,64 @@
+---
+# initial installation of our database stuff
+
+- name: Set container manager
+  set_fact:
+    oci_cmd: "{{ 'docker' if ansible_distribution == 'Ubuntu' else 'podman' }}"
+
+- name: backup existing data volumes to /tmp
+  become: no
+  community.general.archive:
+    path: "{{ app_dir }}/data"
+    dest: "/tmp/data_vol.bk.tgz"
+    owner: "{{ eyemetric_user }}"
+    group: '{{ eyemetric_group }}'
+    mode: "0774"
+
+
+- name: init data volumes
+  block:
+
+    - name: setup pre made data volumes as starting point
+      # become: no
+      register: data_container
+      shell: '{{ oci_cmd  }} run -d --rm --name dbdata {{ dbdata_image }}'
+
+    - name: copy data volumes from data container to tmp dir
+      #become: no
+      register: data_copy
+      shell: |
+        {{ oci_cmd  }} cp dbdata:/safr_pgdata.gz.tar /tmp
+        {{ oci_cmd  }} cp dbdata:/pvdb_pgdata.gz.tar /tmp
+
+    - debug:
+        var: data_copy
+    - debug:
+        var: data_container
+
+
+    - name: Extract data volume archives to volume location
+      unarchive:
+        src:  '{{ item }}'
+        dest: '{{ app_dir }}/data'
+        remote_src: yes
+        owner: '{{ eyemetric_user }}'
+        group: '{{ eyemetric_group }}'
+        mode: '0774'
+      loop:
+        - /tmp/safr_pgdata.gz.tar
+        - /tmp/pvdb_pgdata.gz.tar
+
+
+    - name: Stop dbdata container
+      #become: no
+      docker_container:
+        name: dbdata
+        state: stopped
+      when: oci_cmd == 'docker'
+
+    - name: Stop dbdata container
+      #become: no
+      podman_container:
+        name: dbdata
+        state: stopped
+      when: oci_cmd == 'podman'

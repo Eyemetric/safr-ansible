@@ -1,0 +1,65 @@
+---
+#################################################################
+# Tasks for ensuring that our non-root user
+# can run podman and restart podman services after machine reboots
+#################################################################
+- name: "create user dir for eyemetric.service unit"
+  file:
+    path: '/home/{{ eyemetric_user }}/.config/systemd/user'
+    state: directory
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0744'
+
+- name: create the .ansible/tmp dir with permissions
+  file:
+    path: '/home/{{ eyemetric_user }}/.ansible/tmp'
+    state: directory
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0777'
+
+- name: "Copy eyemetric.service systemd unit file"
+  #become_user: "{{ eyemetric_user }}"
+  template:
+    src: eyemetric.service.j2
+    dest: "/home/{{ eyemetric_user }}/.config/systemd/user/eyemetric.service"
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0664'
+
+- name: get the uid of the user
+  command: "id -u {{ eyemetric_user }}"
+  register: the_uid
+  check_mode: no
+  changed_when: false
+
+- debug:
+    var: the_uid
+
+- name: "Determine XDG_RUNTIME_DIR"
+  set_fact:
+    xdg_runtime_dir: "/run/user/{{ the_uid.stdout }}"
+  changed_when: false
+
+- name: Enable eyemetric.service
+  become_user: "{{ eyemetric_user }}"
+  environment:
+    XDG_RUNTIME_DIR: "{{ xdg_runtime_dir }}"
+  systemd:
+    scope: user
+    daemon_reload: yes
+    enabled: yes
+    name: eyemetric.service
+    state: stopped
+
+#A lingering user allow us to run systemd services without having ot log in first as that user.
+- name: Check if user is lingering
+  stat:
+    path: "/var/lib/systemd/linger/{{ eyemetric_user }}"
+  register: user_lingering
+
+
+- name: Enable linger for "{{ eyemetric_user }}" user
+  ansible.builtin.command: "loginctl enable-linger {{ eyemetric_user }}"
+  when: not user_lingering.stat.exists

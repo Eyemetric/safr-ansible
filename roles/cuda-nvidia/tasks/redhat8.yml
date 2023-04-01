@@ -1,0 +1,3 @@
+- name: rhel 8 gpu setup
+  debug:
+    msg: "There are no tasks defined to set up NVIDIA on RHEL 8"
