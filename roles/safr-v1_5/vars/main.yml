@@ -1,2 +1,61 @@
 ---
 # vars file for safr-v1_5
+safr_images:
+  fr_api: 'docker.io/eyemetricfr/fr-api:1.5.1'
+  frdb: 'docker.io/postgres:14.1'
+  identity: 'docker.io/eyemetricfr/identity:v4.0.0'
+  fr_cams: 'docker.io/eyemetricfr/fr-cams:1.5.1'
+
+host_ip: '{{ansible_default_ipv4.address}}'
+fr_backend: 'pv' #or cv
+################################################
+# safr DB vars
+################################################
+fr_db_user: 'admin'
+fr_db_pwd: 'admin'
+fr_db_name: 'safr'
+fr_db_port: 5433
+
+################################################
+# safr api env vars
+################################################
+fr_api_http_port: 3033
+fr_api_https_port: 443
+cv_url: 'http://onprem-search-engine:7000'
+vid_stream_addr: "{{ host_ip }}:5000"
+detect_addr: '{{ host_ip }}:5050'
+alerts_addr: '{{ host_ip }}:5051'
+
+ident_url: 'http://{{ host_ip }}:8080/v4'
+proc_url: 'http://{{ host_ip }}:8081/v6'
+fr_api: 'https://{{ host_ip }}:{{ fr_api_https_port }}'
+
+min_match: 0
+match_expires: 10
+min_quality: 0.8
+min_dupe_match: 0.98
+
+cams_min_match: 0
+cams_match_expires: 10
+cams_min_quality: 0.8
+cams_min_dupe_match: 0.98
+cams_console_lookup: 'false'
+################################################
+# safr-cams vars
+################################################
+fr_cams_http_port: 3031
+fr_cams_https_port: 3032
+fr_cams_min_match: 0.50
+fr_cams_match_expires: 10
+fr_cams_min_quality: 0.8
+fr_cams_min_dupe_match: 0.98
+
+#-----------
+# TPass
+# ----------
+tpass_user: 'admin'
+tpass_pwd:  'njbs1968'
+tpass_url:  'https://devsys01.tpassvms.com/TpassPVService/'
+log_level: 'info'
+use_tls: 'True'
+time_zone: 'America/New_York'

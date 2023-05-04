@@ -1,5 +1,6 @@
----
+app_ver: "1.5.1" #not good
 fr_engine: 'pv' #default, could be pv or cv
+time_zone: 'America/New_York'
 #dev subscription. I have 16. Obviously not for production
 subscription_username: "brightblade42"
 subscription_password: "R2y1a1n@"
@@ -9,12 +10,11 @@ docker_pwd: "19darkangel84"
 docker_registry: "docker.io"
 env: "dev"
 
-#this should mirror our new semver 
-#app_ver: "v0.92"
-app_ver: "1.0.0"
 local_ip: '{{ ansible_host }}'
-
+host_ip: '{{ ansible_host }}'
 #user we used to ssh into the remote machine. This should always be eyemetric if possible.
+master_user: 'brightblade42'
+master_pwd: 'Eyemetrc#'
 eyemetric_user: 'eyemetric'
 eyemetric_group: "eyemetric"
 eyemetric_pwd: 'Eyemetr1c#'
@@ -22,7 +22,6 @@ eyemetric_pwd: 'Eyemetr1c#'
 ssh_key_file: "/Users/ryan/.ssh/id_rsa.pub"
 #tpass_svc: "https://devsys01.tpassvms.com/tpassservice/"
 tpass_svc: "https://devsys01.tpassvms.com/TpassPVService/"
-#tpass_svc: "https://192.168.3.50/tpassservice/"
 tpass_user: "admin"
 tpass_pwd: "njbs1968"
 
@@ -32,40 +31,6 @@ app_dir: "/opt/eyemetric/fr"
 cert_dir: '{{app_dir}}/certs'
 # don't overwrite any existing volumes.
 overwrite_data_volumes: false
-################################################
-# safr DB vars
-################################################
-safr_db_user: "admin"
-safr_db_pwd: "admin"
-safr_db_name: "safr"
-safr_db_port: 5433
-
-################################################
-# safr api env vars
-################################################
-safr_api_http_port: 443
-safr_api_https_port: 443
-vid_stream_addr: "{{ local_ip }}:5000"
-detect_addr: "{{ local_ip }}:5050"
-alerts_addr: "{{ local_ip }}:5051"
-ident_api: "http://{{ local_ip }}:8080/v4/"
-proc_api: "http://{{ local_ip }}:8081/v6/"
-fr_api: "https://{{ local_ip }}:{{ safr_api_https_port }}"
-safr_api_min_match: 0
-safr_api_match_expires: 10
-safr_api_min_quality: 0.8
-safr_api_min_dupe_match: 0.98
-
-
-################################################
-# safr-cams vars
-################################################
-safr_cams_http_port: 3031
-safr_cams_https_port: 3032
-safr_cams_min_match: 0.50
-safr_cams_match_expires: 10
-safr_cams_min_quality: 0.8
-safr_cams_min_dupe_match: 0.98
 
 ################################################
 # pv processor
@@ -102,16 +67,6 @@ PV_FACE_QUALITY_TRACKING: 0.50
 # List of OCI images representing our application
 ################################################
 
-safr_images:
-    safr_api: 'docker.io/eyemetricfr/safr:{{ app_ver}}'
-    safr_cams: 'docker.io/eyemetricfr/safr-cams:{{ app_ver }}'
-    safrdb: 'docker.io/postgres:{{ pg_ver }}'
 
 dbdata_image: 'docker.io/eyemetricfr/dbdata:{{ app_ver }}'
 
-safr_images2:
-    safr_api: 'eyemetricfr/safr:{{ app_ver}}'
-    safr_cams: 'eyemetricfr/safr-cams:{{ app_ver }}'
-    safrdb: 'postgres:{{ pg_ver }}'
-
-dbdata_image2: 'eyemetricfr/dbdata:{{ app_ver }}'

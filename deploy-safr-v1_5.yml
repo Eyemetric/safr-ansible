@@ -5,11 +5,12 @@
 # ------------------------
 - name: Create FR accounts
   hosts: all
+  remote_user: "{{ eyemetric_user }}"
   become: yes
 
   tasks:
     - name: create users
-      include_tasks: create_user_tasks.yml
+      include_tasks: tasks/create_user_tasks.yml
 
 # ------------------------
 # GPU prequisite install play
@@ -28,19 +29,26 @@
 #------------------------
 # OCI PLAY
 #----------------------------
-- name: podman role for rhel
+- name: OCI roles
   hosts: all
+  become: yes
   remote_user: "{{ eyemetric_user }}"
-  roles:
-    - role: podman
-  when: ansible_distribution == "RedHat"
 
-- name: docker role for rhel
-  hosts: all
-  remote_user: "{{ eyemetric_user }}"
+  pre_tasks:
+    - name: Enable RHEL 8 | 9  repos
+      include_tasks: tasks/enable_rhel_repo_tasks.yml
+      when: ansible_distribution == "RedHat"
+
   roles:
-    - role: docker
-  when: ansible_distribution == "Ubuntu"
+    - { role: podman,  when: ansible_distribution == "RedHat" }
+    - { role: docker, when: ansible_distribution == "Ubuntu" }
+  tags:
+    - oci
+# - name: docker role for rhel
+#   hosts: all
+#   remote_user: "{{ eyemetric_user }}"
+#   roles:
+#     - { role: docker, when: ansible_distribution == "Ubuntu" }
 
 
 # ------------------------
@@ -51,10 +59,6 @@
   remote_user: "{{ eyemetric_user }}"
   become: yes
 
-  pre_tasks:
-    - name: Enable RHEL 8 | 9  repos
-      include_tasks: enable_rhel_repo_tasks.yml
-      when: ansible_distribution == "RedHat"
 
   roles:
     - role: safr-v1_5
@@ -75,7 +79,8 @@
 
   roles:
     - role: paravision-v6
-
+  tags:
+    - oci
 
 - name: Install Clearview (1.5) services
   hosts: clearview
@@ -95,4 +100,32 @@
 
   tasks:
     - name: Run the data tasks
-      include_tasks: dbtasks.yml
+      include_tasks: tasks/dbtasks.yml
+
+  tags:
+    - oci
+# NOTE: don't know what to do with this yet.
+# - name: Register with RHEL play
+#   #- name: Prepare GPU and Podman for FR
+#   #hosts: fr_laptops
+#   hosts: home
+#   become: yes
+#   vars:
+#     subscription_username: "brightblade42"
+#     subscription_password: "R2y1a1n@"
+#     base_dir: "/home/eyemetric"
+#     rhel_ver: {{ ansible_distribution_major_version }}
+#     register_rhel: false
+
+#   tasks:
+#     # Dependencies and prerequisites setup and install
+#     # This works in the lab but in prod we won't be using
+#     # a dev subscription. The org may have their own
+#     - name: Register RHEL installation with sub
+#       community.general.redhat_subscription:
+#         state: present
+#         username: "{{ subscription_username }}"
+#         password: "{{ subscription_password }}"
+#         auto_attach: true
+
+#   when: ansible_distribution == "RedHat"

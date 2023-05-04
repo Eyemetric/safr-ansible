@@ -1,2 +1,29 @@
 ---
 # tasks file for clearview-v1_5
+
+- name: Copy docker-compose.cv.yml to server (cpu and gpu)
+  template:
+    src: docker-compose.frsvc.j2
+    dest: "{{ app_dir }}/{{ item.dir }}/docker-compose.cv.yml"
+    owner: "{{ eyemetric_user }}"
+    group: "{{ eyemetric_user }}"
+  loop:
+    - { dir: "cpu" }
+    - { dir: "gpu" }
+  tags:
+    - templ
+
+- name: copy cv config dir
+  copy:
+    src: config
+    dest:
+      - '{{app_dir}}/cpu/config'
+      - '{{app_dir}}/gpu/config'
+    recurse: yes
+
+- name: pull images
+  debug:
+    msg: 'skipping cv image pull because they are currently too large.'
+# load tasks for the correct OS and version
+#- name: Include tasks for paravision installation RHEL or UBUNTU
+#  include_tasks: "{{ ansible_distribution | lower }}.yml"

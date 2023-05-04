@@ -1,7 +1,5 @@
 ---
-# tasks file for paravision-v6
 
----
 
 - name: copy docker-compose template
   template:
@@ -9,7 +7,7 @@
     dest: '{{ app_dir }}/gpu/docker-compose.pv.yml'
     owner: '{{ eyemetric_user }}'
     group: '{{ eyemetric_user }}'
-  when: gpu
+  when: "'gpu' in group_names"
 
 - name: copy docker-compose template
   template:
@@ -17,7 +15,9 @@
     dest: '{{ app_dir }}/cpu/docker-compose.pv.yml'
     owner: '{{ eyemetric_user }}'
     group: '{{ eyemetric_user }}'
-  when: cpu
+  when: "'cpu' in group_names"
+
+
 # load tasks for the correct OS and version
 - name: Include tasks for paravision installation RHEL or UBUNTU
-  include_tasks: "{{ ansible_distribution }}.yml"
+  include_tasks: "{{ ansible_distribution | lower }}.yml"

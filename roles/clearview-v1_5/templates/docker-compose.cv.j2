@@ -1,0 +1,92 @@
+version: "3"
+services:
+  onprem-search-engine:
+    image: onprem-search-engine:1.5.0
+    ports:
+      - 7000:7000
+    restart: on-failure
+    volumes:
+      - ./config/config-search-engine.env:/root/cv-web/packages/search_engine/config/.env:Z
+    environment:
+      CV_LICENSE_FILE: "yMLuAW1T2a6jRhDNp1h+ZWYAm8WOdKVgdmPAgPcQWQ00ZjHNDsajfEd+KG95yh8F3zszipT0U3WdU6dPlbr++vNT+5P3R/n31ynMQHy/giCoYF1Pf55MqwGgX+AAM9hUsf/Fz7Ppp8k3WgerOIx90MQ5enEtQ+1vxdyTdLDobd8LubBc+dqMtJckq8LFnkzgZ+d51Rbc27vKo4ir9+prABo4SpDMgqZZliGIEQ4haNrRx5j/dVpDUPnRFaJbjOCrOLuDIn4FCAXe9LcxuMc+RDV86Uzt0fZEB1UTo+kPKEa3a+1HYy8vStB+vP3C8+oGUPz88ILAB0H83vWLUVR50PrND5C/j4a6GPYTTp2Y6PO2gtlk8+Hg3/xxRvW38ZBfiBfSwPu77jA2A7w7DEYsBPcajtj1PzP9/DorUVaNyVbeThxVNrjd3hbf8y5yUV9LzxXHrfgbF6ysdXyfK7YUi6JhPfaMdBtK1svgzjd7VmiIIFNpSuf4W2p9v7uIpsxKHSWGJNE3fm9b4irSW2fLK1xe1uEiI7AdUzDA3C3BPGKPAjPsEpMiQFM4R347etizGuZnl+KQ0Bn2XKRSS/KbrusEPZrNBm14DhqphEr26FhSIAeHOz+ESPUu+SVf4Dd2NnqYacaFbhWfLzJJGkRVWOhiCSiuIDrGObAp2y+VE1nMfEqbK0zF14LVsLVvs+donZWtixb2Vu0kghZNEg4Dc9K2YghiVjLrMI1q/ozKRL6ghyzhMDsjtrYK38OTW5nc1Y7w4rOLsILDGwud28oJ5lkHo+cyETVMNshndeu72sKfqT3zzHnPHzVm9lwcWnutMZgp+XkE5NRFukhiuoft2ZS/DIYcU+S5Ug8dWFPi3ujgslP24BjQtsEtZkeujjOiKo1bcU6ySg+IWe2iAQ33gSSGJb67eRFwTCAfT2dhj8dnil17M8sjmNDIKqnoI0u3nRUM9Lx/wI3fbBQJES5CJraUATwFbBpS+kpv9k8hqLy1NaxU2XwEisNtLAkVOn8UfWtzuVO1M8w0CuwZo2mai4tiejBoEZ+HYtvwZLLc9pSieIVDdmWKWoEtAD/HaUs/4YcIS+V1iowNrRckXuqwO0Wsi4iSRO1zreVclvMYYWU2ACElnnI+S5t5ii3FhwaSTUKWc5FBQlUdF7A6eMTJ4iWKqscfpcuYBE+JfSFxqV512hYrhepBm3EhZmbBXPIu6ylbwTaHx/Fcio/0uH9z0VvW7EoXve+GaAj/uzHT3/8B"
+    depends_on:
+      - postgres
+      - redis
+      - onprem-nndb
+      - onprem-mlapi
+    networks:
+      - frnetwork
+
+  onprem-mlapi:
+    image: onprem-mlapi:1.5.0
+    security_opt:
+      - label=disable
+    ports:
+      - 12000:12000
+    restart: on-failure
+  # this will only need to be configured if gpu mode is needed
+    volumes: 
+       - ./config/config-mlapi.yaml:/root/cv-web/config.yaml:Z
+    runtime: nvidia
+    environment:
+      CLEARVIEW_CONFIG: /root/cv-web/config.yaml
+      CV_LICENSE_FILE: "yMLuAW1T2a6jRhDNp1h+ZWYAm8WOdKVgdmPAgPcQWQ00ZjHNDsajfEd+KG95yh8F3zszipT0U3WdU6dPlbr++vNT+5P3R/n31ynMQHy/giCoYF1Pf55MqwGgX+AAM9hUsf/Fz7Ppp8k3WgerOIx90MQ5enEtQ+1vxdyTdLDobd8LubBc+dqMtJckq8LFnkzgZ+d51Rbc27vKo4ir9+prABo4SpDMgqZZliGIEQ4haNrRx5j/dVpDUPnRFaJbjOCrOLuDIn4FCAXe9LcxuMc+RDV86Uzt0fZEB1UTo+kPKEa3a+1HYy8vStB+vP3C8+oGUPz88ILAB0H83vWLUVR50PrND5C/j4a6GPYTTp2Y6PO2gtlk8+Hg3/xxRvW38ZBfiBfSwPu77jA2A7w7DEYsBPcajtj1PzP9/DorUVaNyVbeThxVNrjd3hbf8y5yUV9LzxXHrfgbF6ysdXyfK7YUi6JhPfaMdBtK1svgzjd7VmiIIFNpSuf4W2p9v7uIpsxKHSWGJNE3fm9b4irSW2fLK1xe1uEiI7AdUzDA3C3BPGKPAjPsEpMiQFM4R347etizGuZnl+KQ0Bn2XKRSS/KbrusEPZrNBm14DhqphEr26FhSIAeHOz+ESPUu+SVf4Dd2NnqYacaFbhWfLzJJGkRVWOhiCSiuIDrGObAp2y+VE1nMfEqbK0zF14LVsLVvs+donZWtixb2Vu0kghZNEg4Dc9K2YghiVjLrMI1q/ozKRL6ghyzhMDsjtrYK38OTW5nc1Y7w4rOLsILDGwud28oJ5lkHo+cyETVMNshndeu72sKfqT3zzHnPHzVm9lwcWnutMZgp+XkE5NRFukhiuoft2ZS/DIYcU+S5Ug8dWFPi3ujgslP24BjQtsEtZkeujjOiKo1bcU6ySg+IWe2iAQ33gSSGJb67eRFwTCAfT2dhj8dnil17M8sjmNDIKqnoI0u3nRUM9Lx/wI3fbBQJES5CJraUATwFbBpS+kpv9k8hqLy1NaxU2XwEisNtLAkVOn8UfWtzuVO1M8w0CuwZo2mai4tiejBoEZ+HYtvwZLLc9pSieIVDdmWKWoEtAD/HaUs/4YcIS+V1iowNrRckXuqwO0Wsi4iSRO1zreVclvMYYWU2ACElnnI+S5t5ii3FhwaSTUKWc5FBQlUdF7A6eMTJ4iWKqscfpcuYBE+JfSFxqV512hYrhepBm3EhZmbBXPIu6ylbwTaHx/Fcio/0uH9z0VvW7EoXve+GaAj/uzHT3/8B"
+      OMP_NUM_THREADS: 1
+      OMP_WAIT_POLICY: passive
+      DD_AGENT_HOST: datadog
+      DD_TRACE_STARTUP_LOGS: "false"
+      DD_DOGSTATSD_DISABLE: "true"
+      DD_TRACE_ENABLED: "false"
+    networks:
+      - frnetwork
+    depends_on:
+      - posgres
+
+  onprem-nndb:
+    image: onprem-nndb:1.5.0
+    ports:
+      - 9000:9000
+    restart: on-failure
+    volumes:
+      #- ./data/nndb:/opt/nndb:Z
+      - /opt/eyemetric/fr/data/cv/nndb:/opt/nndb:Z
+      - ./config/config-nndb.yaml:/root/cv-web/config.yaml:Z
+    environment:
+      CV_LICENSE_FILE: "yMLuAW1T2a6jRhDNp1h+ZWYAm8WOdKVgdmPAgPcQWQ00ZjHNDsajfEd+KG95yh8F3zszipT0U3WdU6dPlbr++vNT+5P3R/n31ynMQHy/giCoYF1Pf55MqwGgX+AAM9hUsf/Fz7Ppp8k3WgerOIx90MQ5enEtQ+1vxdyTdLDobd8LubBc+dqMtJckq8LFnkzgZ+d51Rbc27vKo4ir9+prABo4SpDMgqZZliGIEQ4haNrRx5j/dVpDUPnRFaJbjOCrOLuDIn4FCAXe9LcxuMc+RDV86Uzt0fZEB1UTo+kPKEa3a+1HYy8vStB+vP3C8+oGUPz88ILAB0H83vWLUVR50PrND5C/j4a6GPYTTp2Y6PO2gtlk8+Hg3/xxRvW38ZBfiBfSwPu77jA2A7w7DEYsBPcajtj1PzP9/DorUVaNyVbeThxVNrjd3hbf8y5yUV9LzxXHrfgbF6ysdXyfK7YUi6JhPfaMdBtK1svgzjd7VmiIIFNpSuf4W2p9v7uIpsxKHSWGJNE3fm9b4irSW2fLK1xe1uEiI7AdUzDA3C3BPGKPAjPsEpMiQFM4R347etizGuZnl+KQ0Bn2XKRSS/KbrusEPZrNBm14DhqphEr26FhSIAeHOz+ESPUu+SVf4Dd2NnqYacaFbhWfLzJJGkRVWOhiCSiuIDrGObAp2y+VE1nMfEqbK0zF14LVsLVvs+donZWtixb2Vu0kghZNEg4Dc9K2YghiVjLrMI1q/ozKRL6ghyzhMDsjtrYK38OTW5nc1Y7w4rOLsILDGwud28oJ5lkHo+cyETVMNshndeu72sKfqT3zzHnPHzVm9lwcWnutMZgp+XkE5NRFukhiuoft2ZS/DIYcU+S5Ug8dWFPi3ujgslP24BjQtsEtZkeujjOiKo1bcU6ySg+IWe2iAQ33gSSGJb67eRFwTCAfT2dhj8dnil17M8sjmNDIKqnoI0u3nRUM9Lx/wI3fbBQJES5CJraUATwFbBpS+kpv9k8hqLy1NaxU2XwEisNtLAkVOn8UfWtzuVO1M8w0CuwZo2mai4tiejBoEZ+HYtvwZLLc9pSieIVDdmWKWoEtAD/HaUs/4YcIS+V1iowNrRckXuqwO0Wsi4iSRO1zreVclvMYYWU2ACElnnI+S5t5ii3FhwaSTUKWc5FBQlUdF7A6eMTJ4iWKqscfpcuYBE+JfSFxqV512hYrhepBm3EhZmbBXPIu6ylbwTaHx/Fcio/0uH9z0VvW7EoXve+GaAj/uzHT3/8B"
+      LD_PRELOAD: /opt/conda/lib/libmkl_avx.so::/opt/conda/lib/libmkl_core.so::/opt/conda/lib/libmkl_sequential.so
+      OMP_NUM_THREADS: 1
+      OMP_WAIT_POLICY: passive
+      DD_AGENT_HOST: datadog
+      DD_TRACE_STARTUP_LOGS: "false"
+      DD_DOGSTATSD_DISABLE: "true"
+      DD_TRACE_ENABLED: "false"
+    networks:
+      - frnetwork
+    depends_on:
+      - redis
+
+  postgres:
+    image: postgres:14.2-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      #- ./data/postgres:/var/lib/postgresql/data:Z
+      - /opt/eyemetric/fr/data/cv/postgres:/var/lib/postgresql/data:Z
+    environment:
+      POSTGRES_PASSWORD: "Mb2m92bkw%SDH#WG"
+    networks:
+      - frnetwork
+
+  redis:
+    image: redis:6.2-alpine
+    ports:
+      - 6379:6379
+    command: redis-server --save "" --appendonly no
+    volumes:
+      - /opt/eyemetric/fr/data/cv/redis:/data:Z
+    networks:
+      - frnetwork
+
+networks:
+  frnetwork:
+    external: true

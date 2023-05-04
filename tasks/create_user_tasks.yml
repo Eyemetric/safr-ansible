@@ -47,5 +47,5 @@
   block:
     - name: create eyemetric user
       debug:
-        msg "No UBUNTU eyemetric users currently created. TBD"
+        msg: "No UBUNTU eyemetric users currently created. TBD"
   when: ansible_distribution == "Ubuntu"

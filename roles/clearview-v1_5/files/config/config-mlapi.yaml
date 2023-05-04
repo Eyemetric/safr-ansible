@@ -1,0 +1,52 @@
+# NOTE: Please see `default-setings.yaml` to see what other values are being included due to inheritance.
+
+###################################################################################################
+# Global
+###################################################################################################
+environment: "production"
+#### Logs
+log_level: warning
+json_logs: false
+
+###################################################################################################
+# MLAPI
+###################################################################################################
+mlapi:
+  api_version: "v1"
+  model_version: 2
+  urls:
+    - http://onprem-mlapi:12000
+  use_new_models: True
+  use_streaming_arch: True
+  detector:
+    retinaface:
+      redis_broker: "localhost:6379"
+      redis_prefix: "retinaface_detector"
+      model_path: "/opt/cvm/43eadcff8ba60efc1c10c1fcb7a9266f.cvmo"
+      gpus: "0"
+  embedder:
+    pretzelface:
+      redis_broker: "localhost:6379"
+      redis_prefix: "pretzelface_embedder"
+      model_path: "/opt/cvm/d8166f29619ab6abb7a853400eb0d2b9.cvmo"
+      gpus: "0"
+  spoof_detector:
+    anti_spoofer:
+      redis_broker: "localhost:6379"
+      redis_prefix: "anti_spoofer"
+      model_path: "/opt/cvm/fe7bd6a1a1a8a9bcb9675d70c6e6fd80.cvmo"
+      gpus: "0"
+    hifi_mask_detector:
+      redis_broker: "localhost:6379"
+      redis_prefix: "hifi_mask_detector"
+      model_path: "/opt/cvm/b4a4ea25203717c3a7d1cae337598553.cvmo"
+      gpus: "0"
+  lms_detector:
+    redis_broker: "localhost:6379"
+    redis_prefix: "lms_detector"
+    model_path: "/opt/cvm/43eadcff8ba60efc1c10c1fcb7a9266f.cvmo"
+    gpus: "0"
+
+  #### API
+  api:
+    flask_secret_key: __ONPREM_FLASK_SECRET_KEY__

@@ -3,19 +3,19 @@
 services:
 
     proc-v6:
-        image: {{ cpu_images['processor'] }}
+        image: {{ cpu_images.processor }}
         security_opt:
             - "label=type:nvidia_container_t"
         environment:
-            - PV_HTTP_INTERFACE=on
-            - PV_INFERENCE_WORKERS=1
+            - PV_HTTP_INTERFACE={{http_interface}}
+            - PV_INFERENCE_WORKERS={{processor_inference_workers}}
         network_mode: bridge
         restart: always
         ports:
             - "50051:50051"
             - "8081:8081"
     ident-v4:
-        image: {{ cpu_images['identity'] }}
+        image: docker.io/eyemetricfr/identity:v4.0.0
         environment:
             - POSTGRES_URI=postgresql://admin:admin@pvdb:5432/identity?sslmode=disable
             - HTTP_PROXY=on
@@ -26,28 +26,28 @@ services:
             - "8080:8080"
 
     pvdb:
-        image: {{ cpu_images['pvdb'] }}
+        image: {{ cpu_images.pvdb }}
         network_mode: bridge
         restart: always
         environment:
-            - POSTGRES_USER=admin
-            - POSTGRES_PASSWORD=admin
-            - POSTGRES_DB=identity
+            - POSTGRES_USER={{db_user}}
+            - POSTGRES_PASSWORD={{db_pwd}}
+            - POSTGRES_DB={{db_name}}
         ports:
             - "5432:5432"
         volumes:
           - /opt/eyemetric/fr/data/pvdb_pgdata/_data:/var/lib/postgresql/data:Z
 
     pvstrm:
-        image: {{ cpu_images['streaming'] }}
+        image: {{ cpu_images.streaming }}
         security_opt:
             - "label=type:nvidia_container_t"
         environment:
-            - TZ="America/New_York"
-            - PV_INFERENCE_WORKERS=1
-            - PV_POSTPROCESSOR_WORKERS=1
-            - PV_OUTPUT_FACES_ONLY=True
-            - PV_FACE_QUALITY_TRACKING=0.5
+            - TZ={{time_zone}}
+            - PV_INFERENCE_WORKERS={{stream_inference_workers}}
+            - PV_POSTPROCESSOR_WORKERS={{stream_post_processor_workers}}
+            - PV_OUTPUT_FACES_ONLY={{output_faces_only}}
+            - PV_FACE_QUALITY_TRACKING={{face_quality_tracking}}
         network_mode: bridge
         restart: always
         ports:

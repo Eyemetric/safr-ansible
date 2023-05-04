@@ -1,0 +1,50 @@
+###################################################################################################
+# Global
+###################################################################################################
+environment: "production"
+#### Logs
+log_level: warning
+json_logs: false
+
+
+
+###################################################################################################
+# REDIS
+###################################################################################################
+redis_servers:
+  nndb_flusher:  # fill in the following with the information of your deployed redis server.
+    host: redis
+    port: 6379
+    password: ""
+
+
+
+###################################################################################################
+# NNDB
+###################################################################################################
+nndb:
+  server:
+    bind: 0.0.0.0 # address to bind grpc server to
+    port: 9000 # grpc listen port
+    workers: 10 # how many grpc worker threads active
+    rpcs: 1000 # allowed simultanious rpc calls.
+  database:
+    dir: /opt/nndb/databases # database storage folder.
+    max_cores: 6 # max allowed cpu cores in use.
+    writable: 3 # max allowed writable shards at one time.
+    max_hdd_percent: 80 # max HDD before writes are rejected
+    max_ram_percent: 100 # max memory before writes are rejected
+  shard:
+    snapshot_threshold: 10000000 # how often to snapshot a writable index ( after n count )
+    sync_threshold: 3600  # how often to snapshot a writable index ( after n seconds )
+  index:
+    nprobe: 4096  # pretuned optimal nprobe - can be reduced for higher performance. ( 1024 - 2048 )
+    n_nearest: 256 # pretuned optimal nnearest
+  wal:
+    enabled: False # if wal files are enabled - they must be intermittently cleared from <database.dir>/collection_name/wals
+    buffer_size_bytes: 1000000  # bytes before flushing WAL to disk ( buffer in memory )
+    max_size: 102400000 # max size per file in bytes.
+  flusher:
+    wait_until: 1000 # how many items in data stream before they are written to a shard.
+    max_stream_size: 1000000 # maximimum pending items to prevent overflow.
+    sync_threshold: 1 # seconds between items before we force a flush to a shard.

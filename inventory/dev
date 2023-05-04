@@ -3,16 +3,19 @@
 
 [njbs]
 173.220.177.74
-173.220.177.77 fr_engine=cv
-
-[njbs:vars]
-fr_engine=pv
+173.220.177.77
 
 [gpu]
 njbs
 home
 
-
-
 [cpu]
 my_linode
+
+
+[paravision]
+gpu
+home
+
+[clearview]
+njbs

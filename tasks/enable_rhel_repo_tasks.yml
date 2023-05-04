@@ -1,6 +1,5 @@
 ---
 # enable our RHLE repos
----
 
 - name: RHSM Enable AppStream repo for RHEL 8 or 9
   community.general.rhsm_repository:

@@ -49,16 +49,16 @@
         - /tmp/pvdb_pgdata.gz.tar
 
 
-    - name: Stop dbdata container
+    - name: Stop docker dbdata container
       #become: no
       docker_container:
         name: dbdata
         state: stopped
       when: oci_cmd == 'docker'
 
-    - name: Stop dbdata container
+    - name: Stop podman dbdata container
       #become: no
-      podman_container:
+      containers.podman.podman_container:
         name: dbdata
         state: stopped
       when: oci_cmd == 'podman'

@@ -1,10 +1,15 @@
 ---
+
+# podman on rhel 9
+
 - name: install container-tools for RHEL 9
+  become: yes
   dnf:
     name: container-tools
     state: latest
 
 - name: install podman-compose for RHEL 9
+  become: yes
   dnf:
     name: podman-compose
     state: latest

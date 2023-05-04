@@ -1,17 +1,31 @@
 ---
 # vars file for paravision-v6
-pv_login: "eyemetric_eyemetricfr"
-pv_pwd: "R2y1a1n@"
-pv_registry: "containers.paravision.ai"
+pv_login: 'eyemetric_eyemetricfr'
+pv_pwd: 'R2y1a1n@'
+pv_registry: 'containers.paravision.ai'
 
 gpu_images:
-    pvdb: "{{docker_registry}}/postgres/postgres:12.0"
-    processor: "{{docker_registry}}/processor/processor:v6-gen5-balanced-tensorrt"
-    identity: "docker.io/eyemetricfr/identity:v4.0.0"
-    streaming: "{{docker_registry}}/streaming/streaming:v6.0.0-tensorrt"
+
+    pvdb: "{{pv_registry}}/postgres/postgres:12.0"
+    processor: "{{pv_registry}}/processor/processor:v6-gen5-balanced-tensorrt"
+    # identity: "docker.io/eyemetricfr/identity:v4.0.0"
+    streaming: "{{pv_registry}}/streaming/streaming:v6.0.0-tensorrt"
 
 cpu_images:
-    pvdb: "{{docker_registry}}/postgres/postgres:12.0"
-    processor: "{{docker_registry}}/processor/processor:v6-gen5-balanced-openvino"
-    identity: "docker.io/eyemetricfr/identity:v4.0.0"
-    streaming: "{{docker_registry}}/streamqing/streaming:v6-openvino"
+    pvdb: "{{pv_registry}}/postgres/postgres:12.0"
+    processor: "{{pv_registry}}/processor/processor:v6.0.0-gen5-balanced-openvino"
+    #identity: "docker.io/eyemetricfr/identity:v4.0.0"
+    streaming: "{{pv_registry}}/streaming/streaming:v6.0.0-openvino"
+
+http_interface: 'on'
+output_faces_only: true
+processor_inference_workers: 1
+stream_post_processor_workers: 1
+stream_inference_workers: 1
+#stream_post_processor_workers: 1
+face_quality_tracking: 0.5
+db_user: 'admin'
+db_pwd: 'admin'
+db_name: 'identity'
+#time_zone: "America/New_York"
+

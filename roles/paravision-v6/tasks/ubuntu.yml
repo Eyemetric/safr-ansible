@@ -1,6 +1,5 @@
 ---
-# shh super secret
----
+
 - name: use docker login so we ca pull paravision legacy from eyemetric
   #become: no
   register: dock_login
@@ -24,7 +23,7 @@
     state: present
     name: '{{ item.value }}'
   loop: '{{ gpu_images | dict2items }}'
-  when: gpu
+  when: "'gpu' in group_names"
 
 - name: pull CPU based paravision images
   register: docker_pull
@@ -33,5 +32,4 @@
     state: present
     name: '{{ item.value }}'
   loop: '{{ cpu_images | dict2items }}'
-  when: cpu
-
+  when: "'cpu' in group_names"

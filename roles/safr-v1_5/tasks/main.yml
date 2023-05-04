@@ -1,18 +1,13 @@
 ---
 # tasks file for safr-v1_5
+- name: Set container manager
+  set_fact:
+    oci_cmd: "{{ 'docker' if ansible_distribution == 'Ubuntu' else 'podman' }}"
 
 
-- name: podman role for rhel
-  include_role:
-    name: podman
-  when: ansible_distribution == "RedHat"
-
-- name: docker role for rhel
-  include_role:
-    name: docker
-  when: ansible_distribution == "Ubuntu"
-
-
+#------------
+# creates the app dir stucture
+#------------
 - name: create safr app directory structure
   file:
     path: '{{ item }}'
@@ -28,6 +23,31 @@
     - '{{ app_dir }}/scripts'
     - '{{ app_dir }}/utils'
 
+- name: copy start scripts
+  copy:
+    src: scripts/start_fr.sh
+    dest:  '{{ item }}'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0774'
+  loop:
+    - '{{ app_dir }}/gpu/'
+    - '{{ app_dir }}/cpu/'
+  tags:
+    - files
+
+- name: copy stop scripts
+  copy:
+    src: scripts/stop_fr.sh
+    dest: '{{ item }}'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0774'
+  loop:
+    - '{{ app_dir }}/gpu/'
+    - '{{ app_dir }}/cpu/'
+  tags:
+    - files
 
 - name: copy safr scripts
   copy:
@@ -37,14 +57,95 @@
     group: '{{ eyemetric_group }}'
     mode: '0774'
 
+- name: copy self-signed key
+  copy:
+    src: fr-api-key.pem
+    dest: '{{ app_dir }}/certs'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '600'
+  tags:
+    - cert
+- name: copy self-signed cert
+  copy:
+    src: fr-api-cert.pem
+    dest: '{{ app_dir }}/certs'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0644'
+  tags:
+    - cert
 
 
-- name: Include paravision role
-  include_role:
-    name: paravision-v6
-  when:  fr_engine  == 'pv'
+#----------------------------------
+# Allow docker get the port access
+# Is this just for RHEL?
 
-- name: Include fr_engine role
-  include_role:
-    name: clearview-v1_5
-  when: fr_engine == 'cv'
+#----------------------------------
+- name: "Set unpriviledged port access to start at 80"
+  lineinfile:
+    path: /etc/sysctl.conf
+    insertafter: EOF
+    line: net.ipv4.ip_unprivileged_port_start=80
+  tags:
+    - cert
+
+
+#--------------------------
+# GET the images with PODMAN
+#--------------------------
+- block:
+  - name: use podman login so we ca pull our images
+    become: no
+    register: podman_login
+    containers.podman.podman_login:
+      username: '{{ docker_login }}'
+      password: '{{ docker_pwd }}'
+      registry: docker.io
+
+  - name: pull SAFR containers from docker.io
+    become: no
+    register: docker_pull
+    containers.podman.podman_image:
+      name: '{{ item.value }}'
+    loop: '{{ safr_images | dict2items }}'
+
+  when: ansible_distribution == "RedHat"
+
+#--------------------------
+# GET the images with Docker
+#--------------------------
+- block:
+  - name: use docker login so we ca pull our images
+    become: no
+    register: docker_login
+    docker_login:
+      username: '{{ docker_login }}'
+      password: '{{ docker_pwd }}'
+      registry: docker.io
+
+  - name: pull SAFR images from docker.io
+    register: docker_pull
+    docker_image:
+      source: pull
+      state: present
+      name: '{{ item.value }}'
+    loop: '{{ safr_images | dict2items }}'
+
+  when: ansible_distribution == "Ubuntu"
+
+- name: Copy docker-compose.frsvc.yml to server (cpu and gpu)
+  template:
+    src: docker-compose.frsvc.j2
+    dest: "{{ app_dir }}/{{ item.dir }}/docker-compose.frsvc.yml"
+    owner: "{{ eyemetric_user }}"
+    group: "{{ eyemetric_user }}"
+  loop:
+    - { dir: "cpu" }
+    - { dir: "gpu" }
+  tags:
+    - templ
+
+- name: ensure non-root user can start services (linger)
+  include_tasks: systemd_user_tasks.yml
+  when: ansible_distribution == "RedHat"
