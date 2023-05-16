@@ -9,15 +9,15 @@ safr_images:
 host_ip: '{{ansible_default_ipv4.address}}'
 fr_backend: 'pv' #or cv
 ################################################
-# safr DB vars
+# cpu DB vars
 ################################################
 fr_db_user: 'admin'
 fr_db_pwd: 'admin'
-fr_db_name: 'safr'
+fr_db_name: 'cpu'
 fr_db_port: 5433
 
 ################################################
-# safr api env vars
+# cpu api env vars
 ################################################
 fr_api_http_port: 3033
 fr_api_https_port: 443
@@ -28,7 +28,8 @@ alerts_addr: '{{ host_ip }}:5051'
 
 ident_url: 'http://{{ host_ip }}:8080/v4'
 proc_url: 'http://{{ host_ip }}:8081/v6'
-fr_api: 'https://{{ host_ip }}:{{ fr_api_https_port }}'
+#fr_api: 'https://{{ host_ip }}:{{ fr_api_https_port }}'
+fr_api: 'http://{{ host_ip }}:{{ fr_api_http_port }}'
 
 min_match: 0
 match_expires: 10
@@ -57,5 +58,12 @@ tpass_user: 'admin'
 tpass_pwd:  'njbs1968'
 tpass_url:  'https://devsys01.tpassvms.com/TpassPVService/'
 log_level: 'info'
-use_tls: 'True'
+#use_tls: 'True'
+use_tls: 'false'
 time_zone: 'America/New_York'
+
+#-------------------
+# volume directories
+#-------------------
+certs_dir: '/opt/eyemetric/fr/certs:/cert'
+safr_data_vol: '/opt/eyemetric/fr/data/safr_pgdata/_data:/var/lib/postgresql/data:Z'

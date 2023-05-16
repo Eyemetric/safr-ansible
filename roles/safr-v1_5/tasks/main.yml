@@ -4,11 +4,10 @@
   set_fact:
     oci_cmd: "{{ 'docker' if ansible_distribution == 'Ubuntu' else 'podman' }}"
 
-
 #------------
 # creates the app dir stucture
 #------------
-- name: create safr app directory structure
+- name: create cpu app directory structure
   file:
     path: '{{ item }}'
     state: directory
@@ -49,7 +48,7 @@
   tags:
     - files
 
-- name: copy safr scripts
+- name: copy cpu scripts
   copy:
     src: scripts
     dest: '{{ app_dir }}/scripts'
@@ -134,18 +133,39 @@
 
   when: ansible_distribution == "Ubuntu"
 
-- name: Copy docker-compose.frsvc.yml to server (cpu and gpu)
-  template:
-    src: docker-compose.frsvc.j2
-    dest: "{{ app_dir }}/{{ item.dir }}/docker-compose.frsvc.yml"
+#- name: Copy docker-compose.frsvc.yml to server (cpu and gpu)
+#  template:
+#    src: docker-compose.frsvc.j2
+#    dest: "{{ app_dir }}/{{ item.dir }}/docker-compose.frsvc.yml"
+#    owner: "{{ eyemetric_user }}"
+#    group: "{{ eyemetric_user }}"
+#  loop:
+#    - { dir: "cpu" }
+#    - { dir: "gpu" }
+#  tags:
+#    - templ
+
+#alt way to get sytemd and podman working
+- name: Template all service.j2 files in a directory
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "/home/{{eyemetric_user}}/.config/systemd/user/{{ item | basename }}"
     owner: "{{ eyemetric_user }}"
     group: "{{ eyemetric_user }}"
-  loop:
-    - { dir: "cpu" }
-    - { dir: "gpu" }
+    mode: 0644
+  with_fileglob:
+    - templates/systemd/*.service
   tags:
-    - templ
+    - systemd
+
 
 - name: ensure non-root user can start services (linger)
   include_tasks: systemd_user_tasks.yml
   when: ansible_distribution == "RedHat"
+
+# let ansible create the pod and generate the systemd fies. not working for safr
+#- name: include deploy pod tasks
+#  include_tasks: deploy_cpu_pods.yml
+#  when: "'cpu' in group_names"
+#  tags:
+#    - pods

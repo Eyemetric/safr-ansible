@@ -34,6 +34,22 @@
 #     - name: Run the data tasks
 #       include_tasks: tasks/dbtasks.yml
 
+
+---
+- name: Subscribe and auto-attach a Red Hat subscription
+  hosts: all
+  become: yes
+  vars:
+    redhat_username: <YOUR_RED_HAT_USERNAME>
+    redhat_password: <YOUR_RED_HAT_PASSWORD>
+  tasks:
+    - name: Register the system with the Red Hat Customer Portal
+      ansible.builtin.redhat_subscription:
+        state: present
+        username: "{{ redhat_username }}"
+        password: "{{ redhat_password }}"
+        auto_attach: true
+
 # NOTE: don't know what to do with this yet.
 # - name: Register with RHEL play
 #   #- name: Prepare GPU and Podman for FR

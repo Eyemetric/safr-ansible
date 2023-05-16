@@ -11,5 +11,5 @@
   become: yes
 
   tasks:
-    - name: create users for eymetric safr
+    - name: create users for eymetric cpu
       include: create_user_tasks.yml

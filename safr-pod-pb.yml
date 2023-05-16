@@ -1,0 +1,103 @@
+---
+- name: Deploy Pod and Containers for Safr 1.5.x
+  hosts: all
+  become: no
+  tasks:
+
+    - name: Ensure frnetwork exists
+      containers.podman.podman_network:
+        name: frnetwork
+        state: present
+
+    - name: Create safr-pod
+      containers.podman.podman_pod:
+        name: safr-pod
+        state: created
+        network: frnetwork
+        ports:
+          - "5433:5432"
+          - "3033:3000"
+          - "443:443"
+          - "3031:80"
+          - "3032:443"
+
+    - name: Deploy fr-cams
+      containers.podman.podman_container:
+        name: fr-cams
+        image: docker.io/eyemetricfr/fr-cams:1.5.1
+        state: created
+        restart_policy: always
+        pod: safr-pod
+        env:
+          SAFR_DB_ADDR: 10.2.0.4
+          SAFR_DB_PORT: 5433
+          VID_STREAM_ADDR: 10.2.0.4:5000
+          DETECT_ADDR: 10.2.0.4:5050
+          ALERTS_ADDR: 10.2.0.4:5051
+          FR_API: https://10.2.0.4:443
+          MIN_MATCH: 0
+          MATCH_EXPIRES: 10
+          MIN_QUALITY: 0.8
+          MIN_DUPE_MATCH: 0.98
+
+    - name: Deploy frdb
+      containers.podman.podman_container:
+        name: frdb
+        image: docker.io/postgres:14.1
+        restart_policy: always
+        state: created
+        pod: safr-pod
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin
+          POSTGRES_DB: cpu
+          TZ: America/New_York
+        volumes:
+          - /opt/eyemetric/fr/data/safr_pgdata/_data:/var/lib/postgresql/data:Z
+
+    - name: Deploy fr-api
+      containers.podman.podman_container:
+        name: fr-api
+        image: docker.io/eyemetricfr/fr-api:1.5.1
+        restart_policy: always
+        state: created
+        pod: safr-pod
+        env:
+          USE_TLS: false
+          SAFR_DB_ADDR: 10.2.0.4
+          SAFR_DB_PORT: 5433
+          FR_BACKEND: pv
+          CV_URL: http://onprem-search-engine:7000
+          PV_IDENT_URL: http://10.2.0.4:8080/v4
+          PV_PROC_URL: http://10.2.0.4:8081/v6
+          MIN_MATCH: 0
+          MATCH_EXPIRES: 10
+          MIN_QUALITY: 0.8
+          MIN_DUPE_MATCH: 0.98
+          TPASS_USER: admin
+          TPASS_PWD: njbs1968
+          TPASS_ADDR: https://devsys01.tpassvms.com/TpassPVService/
+          RUST_LOG: info
+          TZ: America/New_York
+        volumes:
+          - /opt/eyemetric/fr/certs:/cert
+
+    - name: "Ensure the systemd user dir exists"
+      file:
+        path: '/home/{{ eyemetric_user }}/.config/systemd/user'
+        state: directory
+        owner: '{{ eyemetric_user }}'
+        group: '{{ eyemetric_group }}'
+        mode: '0744'
+
+    - name: Generate systemd unit files for safr-pod
+      ansible.builtin.shell:
+        cmd: 'cd /home/{{eyemetric_user}}/.config/systemd/user && podman generate systemd --new --files --name safr-pod'
+      register: result
+      failed_when: result.rc != 0
+
+    - name: Ensure frdb container starts first.
+      ansible.builtin.lineinfile:
+        path: '/home/{{ eyemetric_user }}/.config/systemd/user/container-frdb.service'
+        insertbefore: '^After='
+        line: 'Before=container-fr-api.service'

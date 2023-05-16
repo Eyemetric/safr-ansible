@@ -37,3 +37,7 @@
     state: present
   loop: '{{ cpu_images | dict2items }}'
   when: "'cpu' in group_names"
+
+- name: include deploy pod tasks
+  include_tasks: deploy_cpu_pv_pods.yml
+  when: "'cpu' in group_names"

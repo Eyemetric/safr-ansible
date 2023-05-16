@@ -1,6 +1,5 @@
 ---
 # podman on rhel 8
----
 
 #i think this may have been weird
 - name: uninstall python36, install 39 for RHEL8

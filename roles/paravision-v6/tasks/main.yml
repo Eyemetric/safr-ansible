@@ -1,6 +1,5 @@
 ---
 
-
 - name: copy docker-compose template
   template:
     src: docker-compose.gpu.j2

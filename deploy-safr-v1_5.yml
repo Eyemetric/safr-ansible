@@ -1,17 +1,22 @@
 ---
 
+
 # ------------------------
 # Create eyemetric user and group if needed
 # ------------------------
 - name: Create FR accounts
   hosts: all
-  remote_user: "{{ eyemetric_user }}"
+  #remote_user: "{{ eyemetric_user }}"
+  #remote_user: tempadmin
   become: yes
 
   tasks:
     - name: create users
       include_tasks: tasks/create_user_tasks.yml
-
+    - name: rhel subscription
+      include_tasks: tasks/redhat_sub.yml
+  tags:
+    - create_user
 # ------------------------
 # GPU prequisite install play
 # ------------------------

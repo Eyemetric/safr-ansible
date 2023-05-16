@@ -1,0 +1,109 @@
+---
+  - name: Create Podman network
+    become: no
+    containers.podman.podman_network:
+      name: pvnetwork
+      state: present
+
+  - name: Create pv-pod
+    become: no
+    containers.podman.podman_pod:
+      name: pv-pod
+      state: created
+      network: pvnetwork
+      ports:
+        # for the proc-v6
+        - "50051:50051"
+        - "8081:8081"
+        # for the ident-v4
+        - "5656:5656"
+        - "8080:8080"
+        # for pvdb
+        - "5432:5432"
+        # for the pvstrm
+        - "5000:5000"
+        - "5050:5050"
+        - "5051:5051"
+
+  - name: Create pvdb container
+    become: no
+    containers.podman.podman_container:
+      name: pvdb
+      state: created
+      image: "{{cpu_images.pvdb}}"
+      pod: pv-pod
+      env:
+        POSTGRES_USER: "{{db_user}}"
+        POSTGRES_PASSWORD: "{{db_pwd}}"
+        POSTGRES_DB: "{{db_name}}"
+      volumes:
+        - "/opt/eyemetric/fr/data/pvdb_pgdata/_data:/var/lib/postgresql/data:Z"
+
+
+  - name: Create proc-v6 container
+    become: no
+    containers.podman.podman_container:
+      name: proc-v6
+      state: created
+      image: "{{cpu_images.processor}}"
+      pod: pv-pod
+      env:
+        PV_HTTP_INTERFACE: "on"
+        PV_INFERENCE_WORKERS: "1"
+
+  - name: Create ident-v4 container
+    become: no
+    containers.podman.podman_container:
+      name: ident-v4
+      state: created
+      image: docker.io/eyemetricfr/identity:v4.0.0
+      pod: pv-pod
+      env:
+        POSTGRES_URI: "postgresql://admin:admin@localhost:5432/identity?sslmode=disable"
+        HTTP_PROXY: "on"
+
+  #--security-opt "label=type:nvidia_container_t"
+  # This is different that the others because there are a few settings
+  # not currently supported by the podman task so we gotta rawdawg it son
+  - name: Create the pvstrm service
+    become: no
+    command: >-
+      podman create
+      --name pvstrm
+      --pod pv-pod
+      --env TZ="{{ time_zone }}"
+      --env PV_INFERENCE_WORKERS="{{ stream_inference_workers }}"
+      --env PV_POSTPROCESSOR_WORKERS="{{ stream_post_processor_workers }}"
+      --env PV_OUTPUT_FACES_ONLY="{{ output_faces_only }}"
+      --env PV_FACE_QUALITY_TRACKING="{{ face_quality_tracking }}"
+      --restart always
+      --tmpfs /dev/shm:size=3g
+      "{{ cpu_images.streaming }}"
+    args:
+      creates: pvstrm
+
+  - name: "Ensure the systemd user dir exists"
+    become: no
+    file:
+      path: '/home/{{ eyemetric_user }}/.config/systemd/user'
+      state: directory
+      owner: '{{ eyemetric_user }}'
+      group: '{{ eyemetric_group }}'
+      mode: '0744'
+
+  - name: Generate systemd unit files for pv-pod
+    become: no
+    ansible.builtin.shell:
+      cmd: 'cd /home/{{eyemetric_user}}/.config/systemd/user && podman generate systemd --new --files --name pv-pod'
+    register: result
+    #failed_when: result.rc != 0
+
+  - debug:
+      var: result
+
+  - name: Ensure pvdb container starts first.
+    become: no
+    ansible.builtin.lineinfile:
+      path: '/home/{{ eyemetric_user }}/.config/systemd/user/container-pvdb.service'
+      insertbefore: '^After='
+      line: 'Before=container-ident-v4.service'

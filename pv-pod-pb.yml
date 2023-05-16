@@ -1,0 +1,102 @@
+- name: Deploy Podman pod and containers for Paravsion
+  hosts: all
+  #localhost
+  become: no
+  vars:
+    cname: "ident-v4"
+  tasks:
+
+    - name: Create Podman network
+      containers.podman.podman_network:
+        name: pvnetwork
+        state: present
+
+    - name: Create Podman pod
+      containers.podman.podman_pod:
+        name: pv-pod
+        state: created
+        network: pvnetwork
+        ports:
+          # for the proc-v6
+          - "50051:50051"
+          - "8081:8081"
+          # for the ident-v4
+          - "5656:5656"
+          - "8080:8080"
+          # for pvdb
+          - "5432:5432"
+          # for the pvstrm
+          - "5000:5000"
+          - "5050:5050"
+          - "5051:5051"
+
+    - name: Create pvdb container
+      containers.podman.podman_container:
+        name: pvdb
+        state: created
+        image: containers.paravision.ai/postgres/postgres:12.0
+        pod: pv-pod
+        env:
+          POSTGRES_USER: "admin"
+          POSTGRES_PASSWORD: "admin"
+          POSTGRES_DB: "identity"
+        volumes:
+          - "/opt/eyemetric/fr/data/pvdb_pgdata/_data:/var/lib/postgresql/data:Z"
+
+
+    - name: Create proc-v6 container
+      containers.podman.podman_container:
+        name: proc-v6
+        state: created
+        image: containers.paravision.ai/processor/processor:v6.0.0-gen5-balanced-openvino
+        pod: pv-pod
+        env:
+          PV_HTTP_INTERFACE: "on"
+          PV_INFERENCE_WORKERS: "1"
+
+    - name: Create ident-v4 container
+      containers.podman.podman_container:
+        name: ident-v4
+        state: created
+        image: docker.io/eyemetricfr/identity:v4.0.0
+        pod: pv-pod
+        env:
+          POSTGRES_URI: "postgresql://admin:admin@localhost:5432/identity?sslmode=disable"
+          HTTP_PROXY: "on"
+
+    - name: Create the pvstrm service
+      command: >-
+        podman create
+        --name pvstrm
+        --pod pv-pod
+        --env PV_INFERENCE_WORKERS=1
+        --env PV_POSTPROCESSOR_WORKERS=1
+        --env PV_OUTPUT_FACES_ONLY=true
+        --env PV_FACE_QUALITY_TRACKING=0.50
+        --tmpfs /dev/shm:size=3g
+        containers.paravision.ai/streaming/streaming:v6.0.0-openvino
+      args:
+        creates: pvstrm
+
+
+    - name: "Ensure the systemd user dir exists"
+      file:
+        path: '/home/{{ eyemetric_user }}/.config/systemd/user'
+        state: directory
+        owner: '{{ eyemetric_user }}'
+        group: '{{ eyemetric_group }}'
+        mode: '0744'
+
+    - name: Generate systemd unit files for pv-pod
+      ansible.builtin.shell:
+        cmd: 'cd /home/{{eyemetric_user}}/.config/systemd/user && podman generate systemd --new --files --name pv-pod'
+      register: result
+      failed_when: result.rc != 0
+
+    - name: modify pvdb service file so that it starts first
+      ansible.builtin.lineinfile:
+        path: '/home/{{ eyemetric_user }}/.config/systemd/user/container-pvdb.service'
+        insertbefore: '^After='
+        line: 'Before=container-{{cname}}.service'
+
+

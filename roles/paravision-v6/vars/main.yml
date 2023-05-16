@@ -28,4 +28,4 @@ db_user: 'admin'
 db_pwd: 'admin'
 db_name: 'identity'
 #time_zone: "America/New_York"
-
+pv_data_vol: '/opt/eyemetric/fr/data/pvdb_pgdata/_data:/var/lib/postgresql/data:Z'

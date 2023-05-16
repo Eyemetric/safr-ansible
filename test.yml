@@ -8,15 +8,11 @@
   become: yes
 
   tasks:
-    - name: check for existance of data volume
-      ansible.builtin.stat:
-        path: "{{ app_dir }}/data/pvdb_pgdata"
-      register: data_vol
 
-    - name: We should skip copying the data volume
-      debug:
-        var: data_vol
-      when: data_vol.stat.exists != True or overwrite_data_volumes
-
-
-
+    - name: Generate systemd unit files for safr-pod
+      ansible.builtin.shell:
+        cmd: 'cd /home/{{eyemetric_user}}/.config/systemd/user && podman generate systemd --new --files --name safr-pod'
+      register: result
+      failed_when: result.rc != 0
+      tags:
+        - systemd
