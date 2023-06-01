@@ -46,7 +46,6 @@
 
   roles:
     - { role: podman,  when: ansible_distribution == "RedHat" }
-    - { role: docker, when: ansible_distribution == "Ubuntu" }
   tags:
     - oci
 # - name: docker role for rhel

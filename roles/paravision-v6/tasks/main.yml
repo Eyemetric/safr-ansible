@@ -1,22 +1,34 @@
 ---
 
-#- name: copy docker-compose template
-#  template:
-#    src: docker-compose.gpu.j2
-#    dest: '{{ app_dir }}/gpu/docker-compose.pv.yml'
-#    owner: '{{ eyemetric_user }}'
-#    group: '{{ eyemetric_user }}'
-#  when: "'gpu' in group_names"
+- name: use paravisions custom registry to podman pull pv images
+  become: no
+  register: pv_login
+  containers.podman.podman_login:
+    username: '{{ pv_login }}'
+    password: '{{ pv_pwd }}'
+    registry: '{{ pv_registry }}'
 
-#- name: copy docker-compose template
-#  template:
-#    src: docker-compose.cpu.j2
-#    dest: '{{ app_dir }}/cpu/docker-compose.pv.yml'
-#    owner: '{{ eyemetric_user }}'
-#    group: '{{ eyemetric_user }}'
-#  when: "'cpu' in group_names"
+- name: podman pull GPU based paravision containers
+  become: no
+  register: podman_pull
+  containers.podman.podman_image:
+    name: '{{ item.value }}'
+    state: present
+  loop: '{{ gpu_images | dict2items }}'
+  when: "'gpu' in group_names"
 
+- debug:
+    var: podman_pull
 
-# load tasks for the correct OS and version
-- name: Include tasks for paravision installation RHEL or UBUNTU
-  include_tasks: "{{ ansible_distribution | lower }}.yml"
+- name: podman pull CPU based paravision images
+  become: no
+  register: podman_pull
+  containers.podman.podman_image:
+    name: '{{ item.value }}'
+    state: present
+  loop: '{{ cpu_images | dict2items }}'
+  when: "'cpu' in group_names"
+
+- name: include deploy pod tasks
+  include_tasks: deploy_cpu_pv_pods.yml
+  when: "'cpu' in group_names"

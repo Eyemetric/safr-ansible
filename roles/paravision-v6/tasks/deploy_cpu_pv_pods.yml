@@ -1,4 +1,5 @@
 ---
+
   - name: Create Podman network
     become: no
     containers.podman.podman_network:

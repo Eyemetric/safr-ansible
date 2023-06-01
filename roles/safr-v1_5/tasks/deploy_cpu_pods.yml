@@ -1,23 +1,26 @@
 ---
 
     - name: Ensure frnetwork exists
+      become: no
       containers.podman.podman_network:
         name: frnetwork
         state: present
 
     - name: Create safr-pod
+      become: no
       containers.podman.podman_pod:
         name: safr-pod
         state: created
         network: frnetwork
         ports:
           - "5433:5432"
-          - "3033:3000"
-          - "443:443"
+          - "{{fr_api_http_port}}:3000"
+          - "{{fr_api_https_port}}:443"
           - "3031:80"
-          - "3032:443"
+          #- "3032:443"
 
     - name: Deploy fr-cams
+      become: no
       containers.podman.podman_container:
         name: fr-cams
         image: docker.io/eyemetricfr/fr-cams:1.5.1
@@ -25,18 +28,19 @@
         restart_policy: always
         pod: safr-pod
         env:
-          SAFR_DB_ADDR: 10.2.0.4
+          SAFR_DB_ADDR: {{host_ip}}
           SAFR_DB_PORT: 5433
-          VID_STREAM_ADDR: 10.2.0.4:5000
-          DETECT_ADDR: 10.2.0.4:5050
-          ALERTS_ADDR: 10.2.0.4:5051
-          FR_API: https://10.2.0.4:443
+          VID_STREAM_ADDR: {{host_ip}:5000
+          DETECT_ADDR: {{host_ip}}:5050
+          ALERTS_ADDR: {{host_ip}}:5051
+          FR_API: {{fr_api}}
           MIN_MATCH: 0
           MATCH_EXPIRES: 10
           MIN_QUALITY: 0.8
           MIN_DUPE_MATCH: 0.98
 
     - name: Deploy frdb
+      become: no
       containers.podman.podman_container:
         name: frdb
         image: docker.io/postgres:14.1
@@ -52,6 +56,7 @@
           - /opt/eyemetric/fr/data/safr_pgdata/_data:/var/lib/postgresql/data:Z
 
     - name: Deploy fr-api
+      become: no
       containers.podman.podman_container:
         name: fr-api
         image: docker.io/eyemetricfr/fr-api:1.5.1
@@ -59,13 +64,13 @@
         state: created
         pod: safr-pod
         env:
-          USE_TLS: false
-          SAFR_DB_ADDR: 10.2.0.4
+          USE_TLS: 'false'
+          SAFR_DB_ADDR: {{host_ip}}
           SAFR_DB_PORT: 5433
           FR_BACKEND: pv
           CV_URL: http://onprem-search-engine:7000
-          PV_IDENT_URL: http://10.2.0.4:8080/v4
-          PV_PROC_URL: http://10.2.0.4:8081/v6
+          PV_IDENT_URL: http://{{host_ip}}:8080/v4
+          PV_PROC_URL: http://{{host_ip}}:8081/v6
           MIN_MATCH: 0
           MATCH_EXPIRES: 10
           MIN_QUALITY: 0.8
@@ -79,6 +84,7 @@
           - /opt/eyemetric/fr/certs:/cert
 
     - name: "Ensure the systemd user dir exists"
+      become: no
       file:
         path: '/home/{{ eyemetric_user }}/.config/systemd/user'
         state: directory
@@ -95,6 +101,7 @@
         - systemd
 
     - name: Ensure frdb container starts first.
+      become: no
       ansible.builtin.lineinfile:
         path: '/home/{{ eyemetric_user }}/.config/systemd/user/container-frdb.service'
         insertbefore: '^After='
