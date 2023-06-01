@@ -14,7 +14,7 @@ local_ip: '{{ ansible_host }}'
 host_ip: '{{ ansible_host }}'
 #user we used to ssh into the remote machine. This should always be eyemetric if possible.
 master_user: 'brightblade42'
-master_pwd: 'Eyemetrc#'
+master_pwd: 'Eyemetr1c#'
 eyemetric_user: 'eyemetric'
 eyemetric_group: "eyemetric"
 eyemetric_pwd: 'Eyemetr1c#'

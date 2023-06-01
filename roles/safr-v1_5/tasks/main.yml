@@ -15,46 +15,46 @@
     group: '{{ eyemetric_user }}'
     recurse: true
   loop:
-    - '{{ app_dir }}/cpu'
-    - '{{ app_dir }}/gpu'
+    #- '{{ app_dir }}/cpu'
+    #- '{{ app_dir }}/gpu'
     - '{{ app_dir }}/data'
     - '{{ app_dir }}/certs'
     - '{{ app_dir }}/scripts'
     - '{{ app_dir }}/utils'
-
-- name: copy start scripts
-  copy:
-    src: scripts/start_fr.sh
-    dest:  '{{ item }}'
-    owner: '{{ eyemetric_user }}'
-    group: '{{ eyemetric_group }}'
-    mode: '0774'
-  loop:
-    - '{{ app_dir }}/gpu/'
-    - '{{ app_dir }}/cpu/'
-  tags:
-    - files
-
-- name: copy stop scripts
-  copy:
-    src: scripts/stop_fr.sh
-    dest: '{{ item }}'
-    owner: '{{ eyemetric_user }}'
-    group: '{{ eyemetric_group }}'
-    mode: '0774'
-  loop:
-    - '{{ app_dir }}/gpu/'
-    - '{{ app_dir }}/cpu/'
-  tags:
-    - files
-
-- name: copy cpu scripts
-  copy:
-    src: scripts
-    dest: '{{ app_dir }}/scripts'
-    owner: '{{ eyemetric_user }}'
-    group: '{{ eyemetric_group }}'
-    mode: '0774'
+#
+#- name: copy start scripts
+#  copy:
+#    src: scripts/start_fr.sh
+#    dest:  '{{ item }}'
+#    owner: '{{ eyemetric_user }}'
+#    group: '{{ eyemetric_group }}'
+#    mode: '0774'
+#  loop:
+#    - '{{ app_dir }}/gpu/'
+#    - '{{ app_dir }}/cpu/'
+#  tags:
+#    - files
+#
+#- name: copy stop scripts
+#  copy:
+#    src: scripts/stop_fr.sh
+#    dest: '{{ item }}'
+#    owner: '{{ eyemetric_user }}'
+#    group: '{{ eyemetric_group }}'
+#    mode: '0774'
+#  loop:
+#    - '{{ app_dir }}/gpu/'
+#    - '{{ app_dir }}/cpu/'
+#  tags:
+#    - files
+#
+#- name: copy cpu scripts
+#  copy:
+#    src: scripts
+#    dest: '{{ app_dir }}/scripts'
+#    owner: '{{ eyemetric_user }}'
+#    group: '{{ eyemetric_group }}'
+#    mode: '0774'
 
 - name: copy self-signed key
   copy:
@@ -145,27 +145,27 @@
 #  tags:
 #    - templ
 
-#alt way to get sytemd and podman working
-- name: Template all service.j2 files in a directory
-  ansible.builtin.template:
-    src: "{{ item }}"
-    dest: "/home/{{eyemetric_user}}/.config/systemd/user/{{ item | basename }}"
-    owner: "{{ eyemetric_user }}"
-    group: "{{ eyemetric_user }}"
-    mode: 0644
-  with_fileglob:
-    - templates/systemd/*.service
-  tags:
-    - systemd
-
+##alt way to get sytemd and podman working
+#- name: Template all service.j2 files in a directory
+#  ansible.builtin.template:
+#    src: "{{ item }}"
+#    dest: "/home/{{eyemetric_user}}/.config/systemd/user/{{ item | basename }}"
+#    owner: "{{ eyemetric_user }}"
+#    group: "{{ eyemetric_user }}"
+#    mode: 0644
+#  with_fileglob:
+#    - templates/systemd/*.service
+#  tags:
+#    - systemd
+#
 
 - name: ensure non-root user can start services (linger)
   include_tasks: systemd_user_tasks.yml
   when: ansible_distribution == "RedHat"
 
 # let ansible create the pod and generate the systemd fies. not working for safr
-#- name: include deploy pod tasks
-#  include_tasks: deploy_cpu_pods.yml
-#  when: "'cpu' in group_names"
-#  tags:
-#    - pods
+- name: include deploy pod tasks
+  include_tasks: deploy_cpu_pods.yml
+  when: "'cpu' in group_names"
+  tags:
+    - safr-pods

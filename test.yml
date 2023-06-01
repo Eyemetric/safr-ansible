@@ -9,10 +9,10 @@
 
   tasks:
 
-    - name: Generate systemd unit files for safr-pod
-      ansible.builtin.shell:
-        cmd: 'cd /home/{{eyemetric_user}}/.config/systemd/user && podman generate systemd --new --files --name safr-pod'
-      register: result
-      failed_when: result.rc != 0
-      tags:
-        - systemd
+    - name: List contents of /tmp directory
+      command: ls /tmp
+      register: dir_content
+
+    - name: Display the directory content
+      debug:
+        var: dir_content.stdout_lines

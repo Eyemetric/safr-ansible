@@ -1,20 +1,20 @@
 ---
 
-- name: copy docker-compose template
-  template:
-    src: docker-compose.gpu.j2
-    dest: '{{ app_dir }}/gpu/docker-compose.pv.yml'
-    owner: '{{ eyemetric_user }}'
-    group: '{{ eyemetric_user }}'
-  when: "'gpu' in group_names"
+#- name: copy docker-compose template
+#  template:
+#    src: docker-compose.gpu.j2
+#    dest: '{{ app_dir }}/gpu/docker-compose.pv.yml'
+#    owner: '{{ eyemetric_user }}'
+#    group: '{{ eyemetric_user }}'
+#  when: "'gpu' in group_names"
 
-- name: copy docker-compose template
-  template:
-    src: docker-compose.cpu.j2
-    dest: '{{ app_dir }}/cpu/docker-compose.pv.yml'
-    owner: '{{ eyemetric_user }}'
-    group: '{{ eyemetric_user }}'
-  when: "'cpu' in group_names"
+#- name: copy docker-compose template
+#  template:
+#    src: docker-compose.cpu.j2
+#    dest: '{{ app_dir }}/cpu/docker-compose.pv.yml'
+#    owner: '{{ eyemetric_user }}'
+#    group: '{{ eyemetric_user }}'
+#  when: "'cpu' in group_names"
 
 
 # load tasks for the correct OS and version

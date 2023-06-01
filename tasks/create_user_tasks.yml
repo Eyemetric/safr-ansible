@@ -36,16 +36,16 @@
         groups: wheel
         append: yes
 
-    - name: Check if the local file exists
-      ansible.builtin.stat:
-        path: "{{ ssh_key_file }}"
-      delegate_to: localhost
-      register: local_file_stat
-
-    - name: Execute task when the local file exists
-      ansible.builtin.debug:
-        msg: "The file exists, and the task is executed."
-      when: local_file_stat.stat.exists
+#     - name: Check if the local file exists
+#       ansible.builtin.stat:
+#         path: "{{ ssh_key_file }}"
+#       delegate_to: localhost
+#       register: local_file_stat
+#
+#     - name: Execute task when the local file exists
+#       ansible.builtin.debug:
+#         msg: "The file exists, and the task is executed."
+#       when: local_file_stat.stat.exists
 
 #    - name: Set up authorized keys for the deployer user
 #      authorized_key: user="{{eyemetric_user}}" key="{{item}}"
