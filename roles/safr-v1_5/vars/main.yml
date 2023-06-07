@@ -13,7 +13,7 @@ fr_backend: 'pv' #or cv
 ################################################
 fr_db_user: 'admin'
 fr_db_pwd: 'admin'
-fr_db_name: 'cpu'
+fr_db_name: 'safr'
 fr_db_port: 5433
 
 ################################################
