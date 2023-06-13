@@ -6,14 +6,14 @@ pv_registry: 'containers.paravision.ai'
 
 gpu_images:
     pvdb: "{{pv_registry}}/postgres/postgres:12.0"
-    processor: "{{pv_registry}}/processor/processor:v6-gen5-balanced-tensorrt"
-    # identity: "docker.io/eyemetricfr/identity:v4.0.0"
+    processor: "{{pv_registry}}/processor/processor:v6.0.0-gen5-balanced-tensorrt"
+    identity: "docker.io/eyemetricfr/identity:v4.0.0"
     streaming: "{{pv_registry}}/streaming/streaming:v6.0.0-tensorrt"
 
 cpu_images:
     pvdb: "{{pv_registry}}/postgres/postgres:12.0"
     processor: "{{pv_registry}}/processor/processor:v6.0.0-gen5-balanced-openvino"
-    #identity: "docker.io/eyemetricfr/identity:v4.0.0"
+    identity: "docker.io/eyemetricfr/identity:v4.0.0"
     streaming: "{{pv_registry}}/streaming/streaming:v6.0.0-openvino"
 
 http_interface: 'on'

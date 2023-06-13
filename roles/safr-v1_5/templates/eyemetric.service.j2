@@ -5,11 +5,9 @@ Description=The Eyemetric FR Containers. Keep them running.
 Restart=always
 
 #Compose up
-#ExecStart=/usr/bin/podman-compose -f /opt/eyemetric/fr/{{app_type}}/docker-compose.yml up
-ExecStart=/opt/eyemetric/fr/{{app_type}}/start_fr.sh
+ExecStart=/usr/bin/podman-compose -f /opt/eyemetric/fr/{{app_type}}/docker-compose.pv.yml  -f /opt/eyemetric/fr/{{app_type}}/docker-compose.frsvc.yml up
 #Compose down
-#ExecStop=/usr/bin/podman-compose -f /opt/eyemetric/fr/{{app_type}}/docker-compose.yml down
-ExecStop=/opt/eyemetric/fr/{{app_type}}/stop_fr.sh
+ExecStop=/usr/bin/podman-compose -f /opt/eyemetric/fr/{{app_type}}/docker-compose.pv.yml  -f /opt/eyemetric/fr/{{app_type}}/docker-compose.frsvc.yml down
 
 [Install]
 WantedBy=default.target

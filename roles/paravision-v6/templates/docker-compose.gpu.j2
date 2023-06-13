@@ -1,0 +1,79 @@
+#version: "3.9"
+services:
+
+    proc-v6:
+        image: {{ gpu_images.processor }}
+        security_opt:
+            - "label=type:nvidia_container_t"
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                      - capabilities: [gpu]
+        environment:
+            - PV_HTTP_INTERFACE={{http_interface}}
+            - PV_INFERENCE_WORKERS={{processor_inference_workers}}
+        network_mode: bridge
+        restart: always
+        ports:
+            - "50051:50051"
+            - "8081:8081"
+    ident-v4:
+        image: {{ gpu_images.identity }}
+        environment:
+            - POSTGRES_URI=postgresql://admin:admin@{{host_ip}}:5432/identity?sslmode=disable
+            - HTTP_PROXY=on
+        network_mode: bridge
+        restart: always
+        ports:
+            - "5656:5656"
+            - "8080:8080"
+
+    pvdb:
+        image: {{ gpu_images.pvdb }}
+        network_mode: bridge
+        restart: always
+        environment:
+            - POSTGRES_USER={{db_user}}
+            - POSTGRES_PASSWORD={{db_pwd}}
+            - POSTGRES_DB={{db_name}}
+        ports:
+            - "5432:5432"
+        volumes:
+          - /opt/eyemetric/fr/data/pvdb_pgdata/_data:/var/lib/postgresql/data:Z
+
+    pvstrm:
+        image: {{ gpu_images.streaming }}
+        security_opt:
+            - "label=type:nvidia_container_t"
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                      - capabilities: [gpu]
+        environment:
+            - TZ={{time_zone}}
+            - PV_INFERENCE_WORKERS={{stream_inference_workers}}
+            - PV_POSTPROCESSOR_WORKERS={{stream_post_processor_workers}}
+            - PV_OUTPUT_FACES_ONLY={{output_faces_only}}
+            - PV_FACE_QUALITY_TRACKING={{face_quality_tracking}}
+            - NVIDIA_VISIBLE_DEVICES=all
+            - NVIDIA_DRIVER_CAPABILITIES=all
+        network_mode: bridge
+        restart: always
+        ports:
+            - "5000:5000"
+            - "5050:5050"
+            - "5051:5051"
+        volumes:
+            - type: tmpfs
+              target: /dev/shm
+              tmpfs:
+                  size: 3g #000000000 # ~6gb
+
+        depends_on:
+            - pvdb
+
+networks:
+  frnetwork:
+    external: true

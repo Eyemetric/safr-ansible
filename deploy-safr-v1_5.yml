@@ -55,6 +55,37 @@
 #     - { role: docker, when: ansible_distribution == "Ubuntu" }
 
 
+
+# ------------------------
+# DATA PLAY not sure this is the right place for this
+# ------------------------
+- name: Install initial data volumes for new installs
+  hosts: all
+  remote_user: "{{ eyemetric_user }}"
+  become: yes
+  pre_tasks:
+    - name: create app dir directory structure
+      file:
+        path: '{{ item }}'
+        state: directory
+        owner: '{{ eyemetric_user }}'
+        group: '{{ eyemetric_user }}'
+        recurse: true
+      loop:
+        - '{{ app_dir }}/cpu'
+        - '{{ app_dir }}/gpu'
+        - '{{ app_dir }}/data'
+        - '{{ app_dir }}/certs'
+        - '{{ app_dir }}/scripts'
+        - '{{ app_dir }}/utils'
+
+  tasks:
+    - name: Run the data tasks
+      include_tasks: tasks/dbtasks.yml
+
+  tags:
+    - oci
+
 # ------------------------
 # SAFR 1.5 PLAY
 # ------------------------
@@ -72,20 +103,6 @@
       debug:
         msg: "Running post tasks for Safr Play"
 
-# ------------------------
-# DATA PLAY not sure this is the right place for this
-# ------------------------
-- name: Install initial data volumes for new installs
-  hosts: all
-  remote_user: "{{ eyemetric_user }}"
-  become: yes
-
-  tasks:
-    - name: Run the data tasks
-      include_tasks: tasks/dbtasks.yml
-
-  tags:
-    - oci
 # ------------------------
 # FR ENGINE PLAYS
 # ------------------------

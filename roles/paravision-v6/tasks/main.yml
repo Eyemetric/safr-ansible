@@ -29,6 +29,26 @@
   loop: '{{ cpu_images | dict2items }}'
   when: "'cpu' in group_names"
 
-- name: include deploy pod tasks
-  include_tasks: deploy_cpu_pv_pods.yml
+- name: copy docker-compose GPU template
+  template:
+    src: docker-compose.gpu.j2
+    dest: '{{ app_dir }}/gpu/docker-compose.pv.yml'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_user }}'
+  when: "'gpu' in group_names"
+
+- name: copy docker-compose CPU template
+  template:
+    src: docker-compose.cpu.j2
+    dest: '{{ app_dir }}/cpu/docker-compose.pv.yml'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_user }}'
   when: "'cpu' in group_names"
+
+#- name: include deploy pod tasks
+#  include_tasks: deploy_cpu_pv_pods.yml
+#  when: "'cpu' in group_names"
+#
+#- name: include deploy pod tasks
+#  include_tasks: deploy_gpu_pv_pods.yml
+#  when: "'gpu' in group_names"

@@ -60,7 +60,7 @@
       image: docker.io/eyemetricfr/identity:v4.0.0
       pod: pv-pod
       env:
-        POSTGRES_URI: "postgresql://admin:admin@localhost:5432/identity?sslmode=disable"
+        POSTGRES_URI: "postgresql://admin:admin@{{host_ip}}:5432/identity?sslmode=disable"
         HTTP_PROXY: "on"
 
   #--security-opt "label=type:nvidia_container_t"

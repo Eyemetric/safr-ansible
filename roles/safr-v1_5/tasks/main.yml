@@ -7,7 +7,7 @@
 #------------
 # creates the app dir stucture
 #------------
-- name: create cpu app directory structure
+- name: create app dir directory structure
   file:
     path: '{{ item }}'
     state: directory
@@ -15,40 +15,42 @@
     group: '{{ eyemetric_user }}'
     recurse: true
   loop:
-    #- '{{ app_dir }}/cpu'
-    #- '{{ app_dir }}/gpu'
+    - '{{ app_dir }}/cpu'
+    - '{{ app_dir }}/gpu'
     - '{{ app_dir }}/data'
     - '{{ app_dir }}/certs'
     - '{{ app_dir }}/scripts'
     - '{{ app_dir }}/utils'
-#
-#- name: copy start scripts
-#  copy:
-#    src: scripts/start_fr.sh
-#    dest:  '{{ item }}'
-#    owner: '{{ eyemetric_user }}'
-#    group: '{{ eyemetric_group }}'
-#    mode: '0774'
-#  loop:
-#    - '{{ app_dir }}/gpu/'
-#    - '{{ app_dir }}/cpu/'
-#  tags:
-#    - files
-#
-#- name: copy stop scripts
-#  copy:
-#    src: scripts/stop_fr.sh
-#    dest: '{{ item }}'
-#    owner: '{{ eyemetric_user }}'
-#    group: '{{ eyemetric_group }}'
-#    mode: '0774'
-#  loop:
-#    - '{{ app_dir }}/gpu/'
-#    - '{{ app_dir }}/cpu/'
-#  tags:
-#    - files
-#
-#- name: copy cpu scripts
+
+
+
+- name: copy start_fr scripts
+  copy:
+    src: start_fr.sh
+    dest:  '{{ item }}'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0774'
+  loop:
+    - '{{ app_dir }}/gpu/'
+    - '{{ app_dir }}/cpu/'
+  tags:
+    - files
+
+- name: copy stop_fr scripts
+  copy:
+    src: stop_fr.sh
+    dest: '{{ item }}'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0774'
+  loop:
+    - '{{ app_dir }}/gpu/'
+    - '{{ app_dir }}/cpu/'
+  tags:
+    - files
+
+#- name: copy utility scripts
 #  copy:
 #    src: scripts
 #    dest: '{{ app_dir }}/scripts'
@@ -89,7 +91,6 @@
   tags:
     - cert
 
-
 #--------------------------
 # GET the images with PODMAN
 #--------------------------
@@ -111,61 +112,33 @@
 
   when: ansible_distribution == "RedHat"
 
-#--------------------------
-# GET the images with Docker
-#--------------------------
-- block:
-  - name: use docker login so we ca pull our images
-    become: no
-    register: docker_login
-    docker_login:
-      username: '{{ docker_login }}'
-      password: '{{ docker_pwd }}'
-      registry: docker.io
 
-  - name: pull SAFR images from docker.io
-    register: docker_pull
-    docker_image:
-      source: pull
-      state: present
-      name: '{{ item.value }}'
-    loop: '{{ safr_images | dict2items }}'
 
-  when: ansible_distribution == "Ubuntu"
-
-#- name: Copy docker-compose.frsvc.yml to server (cpu and gpu)
-#  template:
-#    src: docker-compose.frsvc.j2
-#    dest: "{{ app_dir }}/{{ item.dir }}/docker-compose.frsvc.yml"
-#    owner: "{{ eyemetric_user }}"
-#    group: "{{ eyemetric_user }}"
-#  loop:
-#    - { dir: "cpu" }
-#    - { dir: "gpu" }
-#  tags:
-#    - templ
+- name: Copy docker-compose.frsvc.yml to server (cpu and gpu)
+  template:
+    src: docker-compose.frsvc.j2
+    dest: "{{ app_dir }}/{{ item.dir }}/docker-compose.frsvc.yml"
+    owner: "{{ eyemetric_user }}"
+    group: "{{ eyemetric_user }}"
+  loop:
+    - { dir: "cpu" }
+    - { dir: "gpu" }
+  tags:
+    - templ
 
 ##alt way to get sytemd and podman working
-#- name: Template all service.j2 files in a directory
-#  ansible.builtin.template:
-#    src: "{{ item }}"
-#    dest: "/home/{{eyemetric_user}}/.config/systemd/user/{{ item | basename }}"
-#    owner: "{{ eyemetric_user }}"
-#    group: "{{ eyemetric_user }}"
-#    mode: 0644
-#  with_fileglob:
-#    - templates/systemd/*.service
-#  tags:
-#    - systemd
-#
+- name: Copy eyemetric.service file
+  ansible.builtin.template:
+    src: eyemetric.service.j2
+    dest: "/home/{{eyemetric_user}}/.config/systemd/user/eyemetric.service"
+    owner: "{{ eyemetric_user }}"
+    group: "{{ eyemetric_user }}"
+    mode: 0644
+  tags:
+    - service
+
 
 - name: ensure non-root user can start services (linger)
   include_tasks: systemd_user_tasks.yml
   when: ansible_distribution == "RedHat"
 
-# let ansible create the pod and generate the systemd fies. not working for safr
-- name: include deploy pod tasks
-  include_tasks: deploy_cpu_pods.yml
-  when: "'cpu' in group_names"
-  tags:
-    - safr-pods
