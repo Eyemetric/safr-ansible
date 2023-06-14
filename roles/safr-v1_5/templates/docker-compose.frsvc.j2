@@ -20,7 +20,7 @@ services:
         image: {{safr_images.fr_api}}
         restart: always
         ports:
-            - "{{ fr_api_http_port }}:3033"
+            - "{{ fr_api_http_port }}:3000"
             - "{{ fr_api_https_port }}:443"
         environment:
             - SAFR_DB_ADDR={{host_ip}}

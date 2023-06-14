@@ -9,7 +9,8 @@ services:
         environment:
             - PV_HTTP_INTERFACE={{http_interface}}
             - PV_INFERENCE_WORKERS={{processor_inference_workers}}
-        network_mode: bridge
+        networks:
+          - frnetwork
         restart: always
         ports:
             - "50051:50051"
@@ -19,7 +20,8 @@ services:
         environment:
             - POSTGRES_URI=postgresql://admin:admin@pvdb:5432/identity?sslmode=disable
             - HTTP_PROXY=on
-        network_mode: bridge
+        networks:
+          - frnetwork
         restart: always
         ports:
             - "5656:5656"
@@ -27,7 +29,8 @@ services:
 
     pvdb:
         image: {{ cpu_images.pvdb }}
-        network_mode: bridge
+        networks:
+          - frnetwork
         restart: always
         environment:
             - POSTGRES_USER={{db_user}}
@@ -48,7 +51,8 @@ services:
             - PV_POSTPROCESSOR_WORKERS={{stream_post_processor_workers}}
             - PV_OUTPUT_FACES_ONLY={{output_faces_only}}
             - PV_FACE_QUALITY_TRACKING={{face_quality_tracking}}
-        network_mode: bridge
+        networks:
+          - frnetwork
         restart: always
         ports:
             - "5000:5000"
