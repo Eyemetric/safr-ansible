@@ -13,8 +13,6 @@
   tasks:
     - name: create users
       include_tasks: tasks/create_user_tasks.yml
-#     - name: rhel subscription
-#       include_tasks: tasks/redhat_sub.yml
   tags:
     - create_user
 # ------------------------
@@ -125,28 +123,3 @@
   roles:
     - role: clearview-v1_5
 
-# NOTE: don't know what to do with this yet.
-# - name: Register with RHEL play
-#   #- name: Prepare GPU and Podman for FR
-#   #hosts: fr_laptops
-#   hosts: home
-#   become: yes
-#   vars:
-#     subscription_username: "brightblade42"
-#     subscription_password: "R2y1a1n@"
-#     base_dir: "/home/eyemetric"
-#     rhel_ver: {{ ansible_distribution_major_version }}
-#     register_rhel: false
-
-#   tasks:
-#     # Dependencies and prerequisites setup and install
-#     # This works in the lab but in prod we won't be using
-#     # a dev subscription. The org may have their own
-#     - name: Register RHEL installation with sub
-#       community.general.redhat_subscription:
-#         state: present
-#         username: "{{ subscription_username }}"
-#         password: "{{ subscription_password }}"
-#         auto_attach: true
-
-#   when: ansible_distribution == "RedHat"
