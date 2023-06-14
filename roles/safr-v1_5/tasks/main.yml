@@ -50,13 +50,13 @@
   tags:
     - files
 
-#- name: copy utility scripts
-#  copy:
-#    src: scripts
-#    dest: '{{ app_dir }}/scripts'
-#    owner: '{{ eyemetric_user }}'
-#    group: '{{ eyemetric_group }}'
-#    mode: '0774'
+- name: copy utility scripts
+  copy:
+    src: scripts
+    dest: '{{ app_dir }}/scripts'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0774'
 
 - name: copy self-signed key
   copy:
@@ -78,6 +78,13 @@
     - cert
 
 
+- name: copy fr-cli tool
+  copy:
+    src: cv-cli
+    dest: '{{ app_dir }}/utils/fr-cli'
+    owner: '{{ eyemetric_user }}'
+    group: '{{ eyemetric_group }}'
+    mode: '0774'
 #----------------------------------
 # Allow docker get the port access
 # Is this just for RHEL?
@@ -91,6 +98,11 @@
   tags:
     - cert
 
+
+- name: Create the frnetwork
+  become: no
+  containers.podman.podman_network:
+    name: frnetwork
 #--------------------------
 # GET the images with PODMAN
 #--------------------------
