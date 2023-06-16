@@ -19,7 +19,7 @@ fr_db_port: 5433
 ################################################
 # cpu api env vars
 ################################################
-fr_api_http_port: 3033
+fr_api_http_port: 6900
 fr_api_https_port: 443
 cv_url: 'http://onprem-search-engine:7000'
 vid_stream_addr: "{{ host_ip }}:5000"
@@ -44,8 +44,8 @@ cams_console_lookup: 'false'
 ################################################
 # safr-cams vars
 ################################################
-fr_cams_http_port: 3031
-fr_cams_https_port: 3032
+fr_cams_http_port: 6910
+fr_cams_https_port: 6911
 fr_cams_min_match: 0.50
 fr_cams_match_expires: 10
 fr_cams_min_quality: 0.8
